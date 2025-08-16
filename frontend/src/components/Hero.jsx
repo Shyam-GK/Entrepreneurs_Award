@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-export default function Hero() {
+export default function Hero({ isSubmitted }) {
     return (
-        <div className="min-h-[calc(100vh-88px)] flex items-center relative">
+        <div className="min-h-[calc(100vh-88px)] flex items-center relative bg-gradient-to-r from-teal-100 via-blue-200 to-indigo-300">
             {/* Main container: stacks vertically on mobile, horizontally on medium screens and up */}
             <div className="container mx-auto px-4 md:px-10 flex flex-col md:flex-row items-center w-full">
 
@@ -12,15 +12,27 @@ export default function Hero() {
                 <div className="w-full md:w-1/2 text-center md:text-left">
                     <div className="py-8">
                         {/* Heading size is responsive */}
-                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-snug">
+                        <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-snug text-gray-900">
                             Alumni Entrepreneur Nomination
                         </h2>
                         {/* Buttons are centered on mobile, start-aligned otherwise */}
                         <div className="flex flex-wrap gap-6 justify-center md:justify-start mt-10">
-                            <Link to="/register" className="action-button text-white font-bold py-4 px-8 rounded-xl shadow-lg text-center text-lg w-60">
-                                Apply now
-                            </Link>
-                            <Link to="/nominate" className="action-button text-white font-bold py-4 px-8 rounded-xl shadow-lg text-center text-lg w-60">
+                            {isSubmitted ? (
+                                <span className="action-button text-white font-bold py-4 px-8 rounded-xl shadow-lg text-center text-lg w-60 bg-green-500 blur-md opacity-75 cursor-not-allowed">
+                                    Application Submitted!
+                                </span>
+                            ) : (
+                                <Link
+                                    to="/register"
+                                    className="action-button text-white font-bold py-4 px-8 rounded-xl shadow-lg text-center text-lg w-60"
+                                >
+                                    Apply now
+                                </Link>
+                            )}
+                            <Link
+                                to="/nominate"
+                                className="action-button text-white font-bold py-4 px-8 rounded-xl shadow-lg text-center text-lg w-60"
+                            >
                                 Recommend others
                             </Link>
                         </div>

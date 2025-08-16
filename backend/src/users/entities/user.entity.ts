@@ -1,4 +1,3 @@
-// X:\Projects\Entrepreneur\entrepreneur-award\src\users\entities\user.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Nomination } from '../../nominations/entities/nomination.entity';
 import { NomineeDetails } from '../../nominee-details/entities/nominee-details.entity';
@@ -27,6 +26,9 @@ export class User {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
+  @Column({ type: 'boolean', default: false })
+  isSubmitted: boolean;  // ✅ New field
 
   @OneToMany(() => Nomination, nomination => nomination.nominator)
   nominationsAsNominator: Nomination[];

@@ -11,6 +11,10 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+  }
+
   render() {
     if (this.state.hasError) {
       return (
@@ -38,13 +42,15 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gradient-to-r from-teal-200 via-blue-300 to-indigo-300">
       <LandingNavbar scrollToCriteria={scrollToCriteria} />
       <main className="flex-grow">
         <ErrorBoundary>
-          <LandingHero />
+          <div className="min-h-[calc(100vh-88px)] flex items-center justify-center">
+            <LandingHero />
+          </div>
         </ErrorBoundary>
-        <div ref={criteriaRef}>
+        <div ref={criteriaRef} className="py-8">
           <EligibilityCriteria />
         </div>
       </main>

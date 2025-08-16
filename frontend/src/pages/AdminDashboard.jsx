@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import NomineeProfile from './NomineeProfile';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function AdminDashboard({ handleLogout }) {
   const [nominees, setNominees] = useState([]);
   const [searchEmail, setSearchEmail] = useState('');
-  const [selectedNominee, setSelectedNominee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -35,15 +33,6 @@ export default function AdminDashboard({ handleLogout }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSelectNominee = (nomineeId) => {
-    console.log('Selected Nominee ID:', nomineeId);
-    setSelectedNominee(nomineeId);
-  };
-
-  const handleBack = () => {
-    setSelectedNominee(null);
   };
 
   return (
@@ -78,14 +67,11 @@ export default function AdminDashboard({ handleLogout }) {
           <div className="flex justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
-        ) : selectedNominee ? (
-          <NomineeProfile nomineeId={selectedNominee} onBack={handleBack} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="border p-2 text-left">ID</th>
                   <th className="border p-2 text-left">Name</th>
                   <th className="border p-2 text-left">Email</th>
                   <th className="border p-2 text-left">Mobile</th>
@@ -96,18 +82,19 @@ export default function AdminDashboard({ handleLogout }) {
               <tbody>
                 {nominees.map((nominee) => (
                   <tr key={nominee.id} className="hover:bg-gray-50">
-                    <td className="border p-2">{nominee.id}</td>
                     <td className="border p-2">{nominee.user?.name || 'N/A'}</td>
                     <td className="border p-2">{nominee.user?.email || 'N/A'}</td>
                     <td className="border p-2">{nominee.user?.mobile || 'N/A'}</td>
                     <td className="border p-2">{nominee.companyName || 'N/A'}</td>
                     <td className="border p-2">
-                      <button
-                        onClick={() => handleSelectNominee(nominee.id)}
-                        className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
+                      <a
+                        href={`/admin/nominee/${nominee.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 inline-block"
                       >
                         View Details
-                      </button>
+                      </a>
                     </td>
                   </tr>
                 ))}

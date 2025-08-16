@@ -1,8 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaButton }) {
-    // State to manage whether the mobile menu is open or closed
     const [isOpen, setIsOpen] = useState(false);
+    const [nomineeId, setNomineeId] = useState(null);
+    const navigate = useNavigate();
+
+    // Fetch current user and their nominee info
+    useEffect(() => {
+        const fetchUserAndNominee = async () => {
+            try {
+                const token = localStorage.getItem("accessToken");
+                if (!token) return;
+
+                // Get user info
+                const resUser = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (!resUser.ok) throw new Error("Failed to fetch user");
+                const user = await resUser.json();
+
+                if (user.isSubmitted) {
+                    // Get nominee details for this user
+                    const resNominee = await fetch(`${import.meta.env.VITE_API_URL}/admin/nominee-details/${user.id}`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (!resNominee.ok) throw new Error("Failed to fetch nominee details");
+                    const nominee = await resNominee.json();
+                    setNomineeId(nominee.id); // store nominee id for navigation
+                }
+            } catch (err) {
+                console.error("Error fetching user/nominee:", err);
+            }
+        };
+
+        fetchUserAndNominee();
+    }, []);
+
+    const goToNomineeDetails = () => {
+        if (nomineeId) navigate(`/admin/nominee-details/${nomineeId}`);
+    };
 
     return (
         <header className="w-full p-4 sm:p-5 shadow-md sticky top-0 z-20 bg-gradient-to-r from-sky-300 via-indigo-300 to-violet-300 backdrop-blur-sm">
@@ -19,16 +56,26 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
                     </h1>
                 </div>
 
-                {/* Desktop Menu - Hidden on small screens */}
+                {/* Desktop Menu */}
                 <div className="hidden md:flex items-center space-x-2 sm:space-x-4">
                     {showCriteriaButton && (
                         <button
                             onClick={scrollToCriteria}
-                            className="text-gray-800 font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors hover:bg-sky-200 cursor-pointer"
+                            className="header-logout-button text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors"
                         >
                             Criteria
                         </button>
                     )}
+
+                    {nomineeId && (
+                        <button
+                            onClick={goToNomineeDetails}
+                            className="text-gray-800 font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors hover:bg-sky-200 cursor-pointer"
+                        >
+                            Nominee Details
+                        </button>
+                    )}
+
                     <button
                         onClick={handleLogout}
                         className="header-logout-button text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors cursor-pointer"
@@ -37,7 +84,7 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
                     </button>
                 </div>
 
-                {/* Mobile Menu Button - Hidden on medium screens and up */}
+                {/* Mobile Menu Button */}
                 <div className="md:hidden">
                     <button onClick={() => setIsOpen(!isOpen)} className="text-gray-800 focus:outline-none">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -47,7 +94,7 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
                 </div>
             </nav>
 
-            {/* Mobile Menu (Dropdown) - Renders only when isOpen is true */}
+            {/* Mobile Menu */}
             {isOpen && (
                 <div className="md:hidden mt-4">
                     <div className="flex flex-col items-center space-y-2">
@@ -55,17 +102,30 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
                             <button
                                 onClick={() => {
                                     scrollToCriteria();
-                                    setIsOpen(false); // Close menu after clicking
+                                    setIsOpen(false);
                                 }}
-                                className="w-full text-center text-gray-800 font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors hover:bg-sky-200 cursor-pointer"
+                                className="w-full text-center header-logout-button text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors"
                             >
                                 Criteria
                             </button>
                         )}
+
+                        {nomineeId && (
+                            <button
+                                onClick={() => {
+                                    goToNomineeDetails();
+                                    setIsOpen(false);
+                                }}
+                                className="w-full text-center text-gray-800 font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors hover:bg-sky-200 cursor-pointer"
+                            >
+                                Nominee Details
+                            </button>
+                        )}
+
                         <button
                             onClick={() => {
                                 handleLogout();
-                                setIsOpen(false); // Close menu after clicking
+                                setIsOpen(false);
                             }}
                             className="w-full text-center header-logout-button text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors cursor-pointer"
                         >

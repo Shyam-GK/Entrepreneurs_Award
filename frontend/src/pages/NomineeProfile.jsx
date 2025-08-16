@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export default function NomineeProfile({ nomineeId, onBack }) {
+export default function NomineeProfile() {
+  const { id } = useParams(); // Get nomineeId from route params
   const [profile, setProfile] = useState(null);
   const [nominators, setNominators] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,20 +17,20 @@ export default function NomineeProfile({ nomineeId, onBack }) {
   useEffect(() => {
     fetchProfile();
     fetchNominators();
-  }, [nomineeId]);
+  }, [id]);
 
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      console.log('Fetching profile for nominee ID:', nomineeId);
-      const response = await axios.get(`${API}/admin/nominee-details/${nomineeId}`, {
+      console.log('Fetching profile for nominee ID:', id);
+      const response = await axios.get(`${API}/admin/nominee-details/${id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
       });
       setProfile(response.data);
       console.log('Profile data:', response.data);
     } catch (err) {
       if (err.response?.status === 404) {
-        setError(`Nominee with ID ${nomineeId} not found`);
+        setError(`Nominee with ID ${id} not found`);
       } else if (err.response?.status === 401) {
         setError('Unauthorized: Please log in again');
       } else {
@@ -42,7 +44,7 @@ export default function NomineeProfile({ nomineeId, onBack }) {
 
   const fetchNominators = async () => {
     try {
-      const response = await axios.get(`${API}/admin/nominee-details/${nomineeId}/nominators`, {
+      const response = await axios.get(`${API}/admin/nominee-details/${id}/nominators`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
       });
       setNominators(response.data);
@@ -55,7 +57,7 @@ export default function NomineeProfile({ nomineeId, onBack }) {
 
   const handleDownloadForm = async () => {
     try {
-      const response = await axios.get(`${API}/admin/nominee-details/${nomineeId}/download-application`, {
+      const response = await axios.get(`${API}/admin/nominee-details/${id}/download-application`, {
         responseType: 'blob',
         headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
       });
@@ -104,6 +106,10 @@ export default function NomineeProfile({ nomineeId, onBack }) {
     }
   };
 
+  const handleBack = () => {
+    window.close(); // Close the tab
+  };
+
   if (loading) return <div className="flex justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
   if (error) return <p className="text-red-600 text-center">{error}</p>;
   if (!profile) return <p className="text-center">No profile data</p>;
@@ -111,39 +117,49 @@ export default function NomineeProfile({ nomineeId, onBack }) {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl p-8">
-        <button onClick={onBack} className="mb-6 flex items-center text-blue-600 hover:text-blue-800">
+        {/* <button onClick={handleBack} className="mb-6 flex items-center text-blue-600 hover:text-blue-800">
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
-          Back to Dashboard
-        </button>
+          Close Tab
+        </button> */}
 
         <div className="text-center mb-8">
-          <img
-            src={profile.photo ? `${API}/uploads/${normalizeFilePath(profile.photo)}` : '/placeholder.jpg'}
-            alt={profile.user?.name || 'Unknown'}
-            className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-blue-500 shadow-md"
-            onError={(e) => { e.target.src = '/placeholder.jpg'; console.error('Image load error:', profile.photo); }}
-          />
-          {profile.photo && (
-            <button
-              onClick={() => handleDownloadFile(profile.photo)}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-md mt-2"
-            >
-              <ArrowDownTrayIcon className="h-5 w-5 inline mr-2" /> Download Photo
-            </button>
+          {profile.photo && profile.photo !== 'N/A' ? (
+            <img
+              src={`${API}/uploads/${normalizeFilePath(profile.photo)}`}
+              alt={profile.user?.name || 'Unknown'}
+              className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-blue-500 shadow-md"
+              onError={(e) => { e.target.src = '/placeholder.jpg'; console.error('Image load error:', profile.photo); }}
+            />
+          ) : (
+            <img
+              src="/placeholder.jpg"
+              alt="No photo"
+              className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-blue-500 shadow-md"
+            />
           )}
-          <h2 className="text-2xl font-bold text-gray-900">{profile.user?.name || 'Unknown'}</h2>
+          <div className="flex justify-center space-x-4">
+            {profile.photo && profile.photo !== 'N/A' && (
+              <button
+                onClick={() => handleDownloadFile(profile.photo)}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-md"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5 inline mr-2" /> Download Photo
+              </button>
+            )}
+            <button
+              onClick={handleDownloadForm}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-md"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5 inline mr-2" /> Download Form
+            </button>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mt-4">{profile.user?.name || 'Unknown'}</h2>
           <p className="text-gray-600">{profile.user?.email || 'N/A'}</p>
           <p className="text-gray-600">{profile.user?.mobile || 'N/A'}</p>
           <p className="text-gray-600">{profile.companyName || 'N/A'}</p>
           <a href={profile.companyWebsite} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
             {profile.companyWebsite || 'N/A'}
           </a>
-        </div>
-
-        <div className="text-center mb-8">
-          <button onClick={handleDownloadForm} className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-md">
-            <ArrowDownTrayIcon className="h-5 w-5 inline mr-2" /> Download Submitted Form
-          </button>
         </div>
 
         <div className="mb-8 p-6 bg-blue-50 rounded-lg shadow-md">

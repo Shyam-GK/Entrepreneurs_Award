@@ -1,5 +1,5 @@
 // src/users/users.service.ts
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus,NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -88,6 +88,11 @@ export class UsersService {
     const e = email.toLowerCase();
     const user = await this.usersRepository.findOne({ where: { email: e } });
     if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    return user;
+  }
+  async findById(id: string): Promise<User> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
     return user;
   }
 

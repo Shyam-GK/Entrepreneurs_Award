@@ -4,7 +4,7 @@ export default function CriteriaSection() {
             <div className="container mx-auto px-10 md:px-20 space-y-12">
                 <div className="bg-white/50 p-8 md:p-12 rounded-2xl shadow-lg backdrop-blur-sm">
                     <h3 className="text-3xl md:text-4xl font-bold mb-10 text-gray-800 text-center">
-                        Eligibility & Selection Criteria
+                        Eligibility Criteria
                     </h3>
                     <ol className="criteria-list">
                         <li>
@@ -46,7 +46,7 @@ export default function CriteriaSection() {
                             <span className="font-semibold">Academic Collaboration:</span> Must actively collaborate with
                             academic or research institutions for R&amp;D or innovation incubation.
                         </li>
-                        <li>
+                        {/* <li>
                             <span className="font-semibold">Innovation &amp; IP:</span> Companies holding valid IPRs.
                         </li>
                         <li>
@@ -64,7 +64,7 @@ export default function CriteriaSection() {
                         <li>
                             <span className="font-semibold">Ethics &amp; Compliance:</span> Clean legal and regulatory record;
                             strong business ethics.
-                        </li>
+                        </li> */}
                     </ol>
                 </div>
             </div>

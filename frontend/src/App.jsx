@@ -10,6 +10,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import NominationPage from './pages/NominationPage';
 import RegistrationPage from './pages/RegistrationPage';
 import AdminDashboard from './pages/AdminDashboard';
+import NomineeProfile from './pages/NomineeProfile'; // Import NomineeProfile
 
 // Import the protected route utility component
 import ProtectedRoute from './components/ProtectedRoute';
@@ -79,7 +80,15 @@ export default function App() {
               <AdminDashboard handleLogout={handleLogout} />
             </ProtectedRoute>
           }
-        /> {/* Admin route for managing users/nominees */}
+        />
+        <Route
+          path="/admin/nominee/:id"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
+              <NomineeProfile />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );

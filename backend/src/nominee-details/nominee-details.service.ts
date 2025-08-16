@@ -60,21 +60,23 @@ export class NomineeDetailsService {
   }
 
   /** Status info so the UI can disable "Apply Now" */
-  async getMyStatus(userId: string) {
-    const nominee = await this.nomineeRepo.findOne({
-      where: { user: { id: userId } },
-    });
+    async getMyStatus(userId: string) {
+      const nominee = await this.nomineeRepo.findOne({
+        where: { user: { id: userId } },
+      });
 
-    // Basic, safe status without adding new DB columns.
-    // You can extend this to include a real "locked" flag if your entity has it.
-    const hasProfile = !!nominee;
-    return { hasProfile };
-  }
+      // Basic, safe status without adding new DB columns.
+      // You can extend this to include a real "locked" flag if your entity has it.
+      const hasProfile = !!nominee;
+      return { hasProfile };
+    }
 
-  /** Upsert nominee details for the given userId */
+    /** Upsert nominee details for the given userId */
   async updateMyNomineeDetails(userId: string, dto: UpdateNomineeDetailsDto): Promise<NomineeDetails> {
-    await this.userRepo.findOneOrFail({ where: { id: userId } });
+    // Ensure the user exists
+    const user = await this.userRepo.findOneOrFail({ where: { id: userId } });
 
+    // Find or create nominee details
     let nominee = await this.nomineeRepo.findOne({
       where: { user: { id: userId } },
       relations: ['user'],
@@ -91,11 +93,20 @@ export class NomineeDetailsService {
 
     const saved = await this.nomineeRepo.save(nominee);
 
+    // Update the user's isSubmitted flag to true
+    if (!user.isSubmitted) {
+      user.isSubmitted = true;
+      await this.userRepo.save(user);
+    }
+
+    // Update nomination status if needed
     if (saved?.user?.email) {
       await this.nominationsService.updateNominationStatus(saved.user.email, saved.user.id);
     }
+
     return saved;
   }
+
 
   /** Internal: verify nominee belongs to user (kept for completeness) */
   private async findNomineeOwnedByUser(nomineeId: string, userId: string): Promise<NomineeDetails> {

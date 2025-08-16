@@ -7,32 +7,39 @@ import Footer from "../components/Footer";
 export default function Dashboard({ handleLogout }) {
     const criteriaRef = useRef(null);
     const [nominations, setNominations] = useState([]);
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
     const scrollToCriteria = () => {
         criteriaRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    // Fetch nominations from API
+    // Fetch nominations and user data from API
     useEffect(() => {
-        const fetchNominations = async () => {
+        const fetchNominationsAndUser = async () => {
             try {
-                // ✅ Use correct key from localStorage
                 const token = localStorage.getItem("accessToken");
                 if (!token) {
                     console.error("No token found — user must log in.");
                     return;
                 }
 
-                const res = await fetch(
-                    `${import.meta.env.VITE_API_URL}/nominations`,
-                    {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`, // ✅ Send token
-                        },
-                    }
-                );
+                // Fetch user info to get isSubmitted (queried from /users/me endpoint)
+                const resUser = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (!resUser.ok) throw new Error("Failed to fetch user");
+                const user = await resUser.json();
+                setIsSubmitted(user.isSubmitted || false);
+                console.log("Fetched user data:", user); // Debug to confirm isSubmitted
+
+                // Fetch nominations
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/nominations`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
 
                 if (!res.ok) {
                     throw new Error(`Error: ${res.status}`);
@@ -49,11 +56,11 @@ export default function Dashboard({ handleLogout }) {
 
                 setNominations(formattedData);
             } catch (err) {
-                console.error("Error fetching nominations:", err);
+                console.error("Error fetching nominations or user:", err);
             }
         };
 
-        fetchNominations();
+        fetchNominationsAndUser();
     }, []);
 
     return (
@@ -64,10 +71,7 @@ export default function Dashboard({ handleLogout }) {
                 showCriteriaButton={true}
             />
             <main className="flex-grow">
-                <div className="bg-blue-50 py-8">
-                    <Hero />
-                </div>
-
+                <Hero isSubmitted={isSubmitted} />
                 {/* ✅ Show table only if nominations exist */}
                 {nominations.length > 0 && (
                     <div className="bg-blue-100 py-6 px-4">
