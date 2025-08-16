@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, Res, UseGuards, HttpStatus,NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, Query, Res, UseGuards, HttpStatus, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -6,7 +6,7 @@ import { AdminService } from './admin.service';
 import type { Response } from 'express';
 import { StreamableFile } from '@nestjs/common';
 import * as fs from 'fs';
-import { join, normalize } from 'path';
+import { join, normalize, extname } from 'path';
 
 @Controller('admin')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -27,7 +27,8 @@ export class AdminController {
 
   @Get('nominee-details/:id/nominators')
   async getNominators(@Param('id') id: string) {
-    return this.adminService.getNominators(id);
+    console.log('Fetching nominators for nominee ID:', id);
+    return this.adminService.getNominatorsByEmail(id);
   }
 
   @Get('nominee-details/:id/download-application')
@@ -42,14 +43,20 @@ export class AdminController {
   @Get('uploads/:fileName')
   async getFile(@Param('fileName') fileName: string, @Res({ passthrough: true }) res: Response): Promise<StreamableFile> {
     const normalizedPath = normalize(fileName).replace(/^(\.\.(\/|\\|$))+/g, '');
-    const filePath = join(__dirname, '..', '..', 'uploads', normalizedPath);
+    const filePath = join(__dirname, '..', '..', 'Uploads', normalizedPath);
     console.log('Requested file:', filePath);
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException(`File ${fileName} not found`);
     }
     const file = fs.createReadStream(filePath);
+    const extension = extname(fileName).toLowerCase();
+    const contentType =
+      extension === '.pdf' ? 'application/pdf' :
+      extension === '.jpg' || extension === '.jpeg' ? 'image/jpeg' :
+      extension === '.png' ? 'image/png' : 'application/octet-stream';
     res.set({
-      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Type': contentType,
+      'Content-Disposition': extension === '.pdf' ? 'inline' : 'attachment; filename=' + fileName,
     });
     return new StreamableFile(file);
   }

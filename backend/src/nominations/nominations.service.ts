@@ -20,8 +20,13 @@ export class NominationsService {
   async create(nominatorId: string, dto: CreateNominationDto): Promise<Nomination> {
     const nominator = await this.usersService.findOne(nominatorId);
 
-    // normalize email for comparisons
+    // Normalize email for comparisons
     const nomineeEmailNormalized = dto.nomineeEmail.toLowerCase();
+
+    // Prevent self-nomination
+    if (nominator.email.toLowerCase() === nomineeEmailNormalized) {
+      throw new HttpException('Self-nomination is not allowed', HttpStatus.BAD_REQUEST);
+    }
 
     // If nomination already exists by same nominator + email, throw Conflict
     const existing = await this.nominationsRepository.findOne({
@@ -72,7 +77,6 @@ export class NominationsService {
     return savedNomination;
   }
 
-
   async updateNominationStatus(email: string, userId: string): Promise<void> {
     const nomEmail = email.toLowerCase();
     const nominations = await this.nominationsRepository.find({
@@ -90,7 +94,6 @@ export class NominationsService {
       }
     }
   }
-
 
   async findByNominator(nominatorId: string): Promise<Nomination[]> {
     return this.nominationsRepository.find({

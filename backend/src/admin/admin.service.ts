@@ -107,14 +107,53 @@ export class AdminService {
     return nominee;
   }
 
-  async getNominators(id: string) {
-    const nominators = await this.nominationRepo.createQueryBuilder('nomination')
+  async getNominatorsByEmail(id: string) {
+    console.log('Fetching nominators for nominee ID:', id);
+    // Step 1: Find the nominee's email using the provided id
+    const nominee = await this.nomineeRepo
+      .createQueryBuilder('nominee')
+      .leftJoinAndSelect('nominee.user', 'user')
+      .where('nominee.id = :id', { id })
+      .select(['nominee.id', 'user.email'])
+      .getOne();
+
+    if (!nominee || !nominee.user?.email) {
+      throw new NotFoundException(`Nominee with ID ${id} or associated user email not found.`);
+    }
+
+    const nomineeEmail = nominee.user.email;
+    console.log('Nominee email:', nomineeEmail);
+
+    // Step 2: Query nominations by nomineeEmail
+    const nominators = await this.nominationRepo
+      .createQueryBuilder('nomination')
       .leftJoinAndSelect('nomination.nominator', 'nominator')
-      .where('nomination.nomineeUserId = :id', { id })
-      .select(['nomination.id', 'nomination.nominatedAt', 'nominator.name', 'nominator.email'])
+      .where('nomination.nomineeEmail = :email', { email: nomineeEmail })
+      .select([
+        'nomination.id',
+        'nomination.nominatedAt',
+        'nominator.id',
+        'nominator.name',
+        'nominator.email',
+      ])
       .getMany();
-    console.log('Fetched nominators for ID:', id, nominators);
-    return nominators;
+
+    // Log detailed nominator data
+    console.log('Raw nominators query result:', JSON.stringify(nominators, null, 2));
+
+    // Map nominators to ensure consistent output
+    const formattedNominators = nominators.map((nomination) => ({
+      id: nomination.id,
+      nominatedAt: nomination.nominatedAt,
+      nominator: {
+        id: nomination.nominator?.id || null,
+        name: nomination.nominator?.name || 'Unknown',
+        email: nomination.nominator?.email || 'N/A',
+      },
+    }));
+
+    console.log('Formatted nominators for email:', nomineeEmail, formattedNominators);
+    return formattedNominators;
   }
 
   async generateApplicationPDF(id: string): Promise<Buffer> {

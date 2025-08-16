@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export default function NomineeProfile() {
+export default function NomineeProfile({ handleLogout }) {
   const { id } = useParams(); // Get nomineeId from route params
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [nominators, setNominators] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,51 +16,77 @@ export default function NomineeProfile() {
   console.log('VITE_API_URL:', API); // Debug API URL
 
   useEffect(() => {
-    fetchProfile();
-    fetchNominators();
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchProfile(), fetchNominators()]);
+      } catch (err) {
+        console.error('Error loading data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, [id]);
 
   const fetchProfile = async () => {
-    setLoading(true);
     try {
       console.log('Fetching profile for nominee ID:', id);
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Please log in to view nominee details.');
+      }
       const response = await axios.get(`${API}/admin/nominee-details/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setProfile(response.data);
-      console.log('Profile data:', response.data);
+      console.log('Profile data:', JSON.stringify(response.data, null, 2));
     } catch (err) {
       if (err.response?.status === 404) {
         setError(`Nominee with ID ${id} not found`);
       } else if (err.response?.status === 401) {
         setError('Unauthorized: Please log in again');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        navigate('/login');
       } else {
-        setError(err.message || 'Failed to fetch profile');
+        setError(err.response?.data?.message || err.message || 'Failed to fetch profile');
       }
       console.error('Fetch profile error:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchNominators = async () => {
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Please log in to view nominators.');
+      }
       const response = await axios.get(`${API}/admin/nominee-details/${id}/nominators`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setNominators(response.data);
-      console.log('Nominators data:', response.data);
+      console.log('Nominators data:', JSON.stringify(response.data, null, 2));
     } catch (err) {
-      setError(err.message || 'Failed to fetch nominators');
+      setError(err.response?.data?.message || err.message || 'Failed to fetch nominators');
       console.error('Fetch nominators error:', err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        navigate('/login');
+      }
     }
   };
 
   const handleDownloadForm = async () => {
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Please log in to download the application.');
+      }
       const response = await axios.get(`${API}/admin/nominee-details/${id}/download-application`, {
         responseType: 'blob',
-        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
@@ -67,10 +94,16 @@ export default function NomineeProfile() {
       link.setAttribute('download', `${profile?.user?.name || 'form'}-application.pdf`);
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.message || 'Failed to download form');
+      setError(err.response?.data?.message || err.message || 'Failed to download form');
       console.error('Download form error:', err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        navigate('/login');
+      }
     }
   };
 
@@ -80,29 +113,67 @@ export default function NomineeProfile() {
     return filePath.replace(/^(Uploads|uploads)\//, '');
   };
 
-  const handleDownloadFile = async (filePath) => {
+  const handleDownloadPhoto = async (filePath) => {
     if (!filePath) {
-      setError('No file available for download');
+      setError('No photo available to download');
       return;
     }
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Please log in to download the photo.');
+      }
       const normalizedPath = normalizeFilePath(filePath);
       const fullUrl = `${API}/uploads/${normalizedPath}`;
-      console.log('Downloading file:', fullUrl);
+      console.log('Downloading photo:', fullUrl);
       const response = await axios.get(fullUrl, {
         responseType: 'blob',
-        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', normalizedPath.split('/').pop() || 'file');
+      link.setAttribute('download', normalizedPath.split('/').pop() || 'photo');
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.response?.status === 404 ? `File ${filePath} not found` : 'Failed to download file');
-      console.error('Download file error:', err);
+      setError(err.response?.status === 404 ? `Photo ${filePath} not found` : err.message || 'Failed to download photo');
+      console.error('Download photo error:', err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        navigate('/login');
+      }
+    }
+  };
+
+  const handleViewFile = async (filePath) => {
+    if (!filePath) {
+      setError('No file available to view');
+      return;
+    }
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('Please log in to view the file.');
+      }
+      const normalizedPath = normalizeFilePath(filePath);
+      const fullUrl = `${API}/uploads/${normalizedPath}`;
+      console.log('Opening file in new tab:', fullUrl);
+      const newTab = window.open(fullUrl, '_blank');
+      if (!newTab) {
+        throw new Error('Failed to open new tab. Please allow pop-ups for this site.');
+      }
+    } catch (err) {
+      setError(err.response?.status === 404 ? `File ${filePath} not found` : err.message || 'Failed to open file');
+      console.error('Open file error:', err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        navigate('/login');
+      }
     }
   };
 
@@ -110,17 +181,41 @@ export default function NomineeProfile() {
     window.close(); // Close the tab
   };
 
-  if (loading) return <div className="flex justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
-  if (error) return <p className="text-red-600 text-center">{error}</p>;
-  if (!profile) return <p className="text-center">No profile data</p>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-6">
+        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl p-8">
+          <p className="text-red-600 text-center">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-gray-100 p-6">
+        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl p-8">
+          <p className="text-center">No profile data</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl p-8">
-        {/* <button onClick={handleBack} className="mb-6 flex items-center text-blue-600 hover:text-blue-800">
+        <button onClick={handleBack} className="mb-6 flex items-center text-blue-600 hover:text-blue-800">
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
           Close Tab
-        </button> */}
+        </button>
 
         <div className="text-center mb-8">
           {profile.photo && profile.photo !== 'N/A' ? (
@@ -128,7 +223,10 @@ export default function NomineeProfile() {
               src={`${API}/uploads/${normalizeFilePath(profile.photo)}`}
               alt={profile.user?.name || 'Unknown'}
               className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-blue-500 shadow-md"
-              onError={(e) => { e.target.src = '/placeholder.jpg'; console.error('Image load error:', profile.photo); }}
+              onError={(e) => {
+                e.target.src = '/placeholder.jpg';
+                console.error('Image load error:', profile.photo);
+              }}
             />
           ) : (
             <img
@@ -140,7 +238,7 @@ export default function NomineeProfile() {
           <div className="flex justify-center space-x-4">
             {profile.photo && profile.photo !== 'N/A' && (
               <button
-                onClick={() => handleDownloadFile(profile.photo)}
+                onClick={() => handleDownloadPhoto(profile.photo)}
                 className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow-md"
               >
                 <ArrowDownTrayIcon className="h-5 w-5 inline mr-2" /> Download Photo
@@ -180,38 +278,44 @@ export default function NomineeProfile() {
               <strong>Registration Certificate:</strong>
               {profile.registrationCertificate ? (
                 <button
-                  onClick={() => handleDownloadFile(profile.registrationCertificate)}
+                  onClick={() => handleViewFile(profile.registrationCertificate)}
                   className="text-blue-500 hover:underline ml-2"
                 >
                   View/Download
                 </button>
-              ) : 'N/A'}
+              ) : (
+                'N/A'
+              )}
             </p>
           </div>
         </div>
 
         <div className="mb-8">
           <h3 className="text-xl font-bold mb-4">Nominators (Count: {nominators.length})</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border p-2 text-left">Name</th>
-                  <th className="border p-2 text-left">Email</th>
-                  <th className="border p-2 text-left">Nominated On</th>
-                </tr>
-              </thead>
-              <tbody>
-                {nominators.map((nominator) => (
-                  <tr key={nominator.id} className="hover:bg-gray-50">
-                    <td className="border p-2">{nominator.name}</td>
-                    <td className="border p-2">{nominator.email}</td>
-                    <td className="border p-2">{new Date(nominator.nominatedAt).toLocaleDateString()}</td>
+          {nominators.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border p-2 text-left">Name</th>
+                    <th className="border p-2 text-left">Email</th>
+                    <th className="border p-2 text-left">Nominated On</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {nominators.map((nomination) => (
+                    <tr key={nomination.id} className="hover:bg-gray-50">
+                      <td className="border p-2">{nomination.nominator?.name || 'Unknown'}</td>
+                      <td className="border p-2">{nomination.nominator?.email || 'N/A'}</td>
+                      <td className="border p-2">{new Date(nomination.nominatedAt).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p>No nominators found.</p>
+          )}
         </div>
 
         <div className="mb-8">
@@ -228,7 +332,7 @@ export default function NomineeProfile() {
                 </tr>
               </thead>
               <tbody>
-                {profile.mergers.map((merger) => (
+                {(profile.mergers || []).map((merger) => (
                   <tr key={merger.id} className="hover:bg-gray-50">
                     <td className="border p-2">{merger.mergerCompany || 'N/A'}</td>
                     <td className="border p-2">{merger.mergerType || 'N/A'}</td>
@@ -237,7 +341,7 @@ export default function NomineeProfile() {
                     <td className="border p-2">
                       {merger.filePath && (
                         <button
-                          onClick={() => handleDownloadFile(merger.filePath)}
+                          onClick={() => handleViewFile(merger.filePath)}
                           className="text-blue-500 hover:underline"
                         >
                           View/Download
@@ -264,7 +368,7 @@ export default function NomineeProfile() {
                 </tr>
               </thead>
               <tbody>
-                {profile.iprs.map((ipr) => (
+                {(profile.iprs || []).map((ipr) => (
                   <tr key={ipr.id} className="hover:bg-gray-50">
                     <td className="border p-2">{ipr.type || 'N/A'}</td>
                     <td className="border p-2">{ipr.title || 'N/A'}</td>
@@ -272,7 +376,7 @@ export default function NomineeProfile() {
                     <td className="border p-2">
                       {ipr.filePath && (
                         <button
-                          onClick={() => handleDownloadFile(ipr.filePath)}
+                          onClick={() => handleViewFile(ipr.filePath)}
                           className="text-blue-500 hover:underline"
                         >
                           View/Download
@@ -302,7 +406,7 @@ export default function NomineeProfile() {
                 </tr>
               </thead>
               <tbody>
-                {profile.awards.map((award) => (
+                {(profile.awards || []).map((award) => (
                   <tr key={award.id} className="hover:bg-gray-50">
                     <td className="border p-2">{award.name || 'N/A'}</td>
                     <td className="border p-2">{award.awardedBy || 'N/A'}</td>
@@ -313,7 +417,7 @@ export default function NomineeProfile() {
                     <td className="border p-2">
                       {award.filePath && (
                         <button
-                          onClick={() => handleDownloadFile(award.filePath)}
+                          onClick={() => handleViewFile(award.filePath)}
                           className="text-blue-500 hover:underline"
                         >
                           View/Download
@@ -341,7 +445,7 @@ export default function NomineeProfile() {
                 </tr>
               </thead>
               <tbody>
-                {profile.collaborations.map((collab) => (
+                {(profile.collaborations || []).map((collab) => (
                   <tr key={collab.id} className="hover:bg-gray-50">
                     <td className="border p-2">{collab.institutionName || 'N/A'}</td>
                     <td className="border p-2">{collab.type || 'N/A'}</td>
@@ -350,7 +454,7 @@ export default function NomineeProfile() {
                     <td className="border p-2">
                       {collab.filePath && (
                         <button
-                          onClick={() => handleDownloadFile(collab.filePath)}
+                          onClick={() => handleViewFile(collab.filePath)}
                           className="text-blue-500 hover:underline"
                         >
                           View/Download
