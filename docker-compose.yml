@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    environment:
+      - JWT_SECRET=supersecretkey
+      - JWT_EXPIRES_IN=60m
+      - JWT_REFRESH_SECRET=superrefreshsecret
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=shyam
+      - DB_NAME=entrepreneur_awards
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=465
+      - SMTP_USER=info.amcs@psgtech.ac.in
+      - SMTP_PASS=xcpx igfx vapw ajfu
+      - APP_URL=http://localhost:3000
+      - API_URL=http://localhost:3000
+    volumes:
+      - uploads:/app/Uploads
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '5173:5173'
+    environment:
+      - VITE_API_URL=http://backend:3000
+      - SUPPORT_EMAIL=info.amcs@psgtech.ac.in
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=shyam
+      - POSTGRES_DB=entrepreneur_awards
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+volumes:
+  uploads:
+  db-data:
+
+networks:
+  app-network:
+    driver: bridge
