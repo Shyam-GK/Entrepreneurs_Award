@@ -63,7 +63,8 @@ export class NominationsService {
         context: {
           nomineeName: dto.nomineeName,
           nominatorName: nominator.name,
-          applyUrl: `${process.env.APP_URL}/auth/register?email=${encodeURIComponent(dto.nomineeEmail)}`,
+          supportEmail: process.env.SUPPORT_EMAIL,
+          applyUrl: `${process.env.APP_URL}`,
         },
       });
     }

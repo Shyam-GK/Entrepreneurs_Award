@@ -11,6 +11,12 @@ import ConfirmationModal from '../components/ConfirmationModal';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+// Valid enum values (must match backend DTOs and database schema)
+const VALID_AWARD_LEVELS = ['National', 'International', 'Industry'];
+const VALID_IPR_TYPES = ['Patent', 'Trademark', 'Copyright'];
+const VALID_MERGER_TYPES = ['Merger', 'Acquisition', 'Partnership'];
+const VALID_COLLABORATION_TYPES = ['Academic', 'Industry', 'Government'];
+
 /** Safely decode JWT payload (base64url) */
 function decodeJwtPayload(token) {
   try {
@@ -82,6 +88,9 @@ async function postForm(url, formData, token, refreshTokenFn) {
   let currentToken = token;
   try {
     console.log('Sending FormData request to:', url, 'with token:', currentToken);
+    for (const [key, value] of formData.entries()) {
+      console.log(`FormData entry: ${key}=${value instanceof File ? value.name : value}`);
+    }
     const res = await fetch(url, {
       method: 'POST',
       headers: { Authorization: `Bearer ${currentToken}` },
@@ -148,7 +157,6 @@ export default function RegistrationPage({ handleLogout }) {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [hasProfile, setHasProfile] = useState(false);
   const [error, setError] = useState('');
 
   // Refresh token function
@@ -207,54 +215,6 @@ export default function RegistrationPage({ handleLogout }) {
         }
       })();
     }
-  }, [navigate]);
-
-  // Check backend status to disable "Apply" if already applied
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        console.log('Checking profile status with token:', token);
-        const res = await fetch(`${API}/nominee-details/my/status`, {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.status === 401) {
-          console.log('Profile status request failed with 401, attempting refresh');
-          try {
-            const newToken = await refreshAccessToken();
-            const retryRes = await fetch(`${API}/nominee-details/my/status`, {
-              method: 'GET',
-              headers: { Authorization: `Bearer ${newToken}` },
-            });
-            if (!retryRes.ok) {
-              console.error('Retry profile status failed:', retryRes.status);
-              return;
-            }
-            const json = await retryRes.json();
-            if (!cancelled) setHasProfile(Boolean(json?.hasProfile));
-          } catch (err) {
-            console.error('Profile status refresh failed:', err.message);
-            setError('Session expired. Please log in again.');
-            navigate('/login');
-          }
-          return;
-        }
-        if (!res.ok) {
-          console.error('Profile status request failed:', res.status);
-          return;
-        }
-        const json = await res.json();
-        if (!cancelled) setHasProfile(Boolean(json?.hasProfile));
-      } catch (err) {
-        console.warn('Could not fetch profile status', err);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
   }, [navigate]);
 
   // Persist step + form to sessionStorage
@@ -402,6 +362,7 @@ export default function RegistrationPage({ handleLogout }) {
       'yearOfEstablishment',
       'totalEmployees',
       'annualTurnover',
+      'businessDomain',
       'keyInnovations',
       'isFirstGeneration',
       'isUnrelatedToFamily',
@@ -411,6 +372,7 @@ export default function RegistrationPage({ handleLogout }) {
       'hasAwards',
       'hasForeignPresence',
       'hasSustainability',
+      'iprDescription',
       'foreignDescription',
       'sustainabilityDescription',
       'ethicsDescription',
@@ -438,8 +400,7 @@ export default function RegistrationPage({ handleLogout }) {
             setError('Invalid registration date format. Please select a valid date using the date picker.');
             return raw;
           }
-          // Send as YYYY-MM-DD string (e.g., "2025-07-01")
-          v = v; // Keep as is (already validated as YYYY-MM-DD)
+          v = v; // Keep as YYYY-MM-DD string
           console.log(`Processed registrationDate as YYYY-MM-DD string: ${v}`);
         } catch (err) {
           console.error(`Error parsing registrationDate: ${v}`, err);
@@ -497,12 +458,46 @@ export default function RegistrationPage({ handleLogout }) {
     return raw;
   };
 
+  // Validate and normalize array field DTOs
+  const validateAndNormalizeDto = (item, fieldName) => {
+    const dto = { ...item };
+    if (fieldName === 'awards' && dto.level) {
+      if (!VALID_AWARD_LEVELS.includes(dto.level)) {
+        console.warn(`Invalid level: ${dto.level}, defaulting to ${VALID_AWARD_LEVELS[0]}`);
+        dto.level = VALID_AWARD_LEVELS[0];
+      }
+      if (dto.yearReceived) {
+        dto.yearReceived = parseInt(dto.yearReceived, 10);
+        if (isNaN(dto.yearReceived)) delete dto.yearReceived;
+      }
+    }
+    if (fieldName === 'iprs' && dto.type) {
+      if (!VALID_IPR_TYPES.includes(dto.type)) {
+        console.warn(`Invalid type: ${dto.type}, defaulting to ${VALID_IPR_TYPES[0]}`);
+        dto.type = VALID_IPR_TYPES[0];
+      }
+    }
+    if (fieldName === 'mergers' && dto.mergerType) {
+      if (!VALID_MERGER_TYPES.includes(dto.mergerType)) {
+        console.warn(`Invalid mergerType: ${dto.mergerType}, defaulting to ${VALID_MERGER_TYPES[0]}`);
+        dto.mergerType = VALID_MERGER_TYPES[0];
+      }
+      if (dto.mergerYear) {
+        dto.mergerYear = parseInt(dto.mergerYear, 10);
+        if (isNaN(dto.mergerYear)) delete dto.mergerYear;
+      }
+    }
+    if (fieldName === 'collaborations' && dto.type) {
+      if (!VALID_COLLABORATION_TYPES.includes(dto.type)) {
+        console.warn(`Invalid type: ${dto.type}, defaulting to ${VALID_COLLABORATION_TYPES[0]}`);
+        dto.type = VALID_COLLABORATION_TYPES[0];
+      }
+    }
+    return dto;
+  };
+
   // Handle form submission
   const handleSubmit = async () => {
-    if (hasProfile) {
-      setError('You have already submitted a profile.');
-      return;
-    }
     setSubmitting(true);
     setError('');
 
@@ -575,13 +570,12 @@ export default function RegistrationPage({ handleLogout }) {
       }
       console.log('Profile payload being sent:', JSON.stringify(profilePayload, null, 2));
 
-      // Send as YYYY-MM-DD string
       try {
         await postJson(`${API}/nominee-details/${userId}/profile`, profilePayload, token, refreshAccessToken);
       } catch (err) {
         console.error('Profile submission failed:', err.message);
         throw new Error(
-          'Profile submission failed: The server is unable to process the registration date. Please ensure a valid date is selected and try again. If the issue persists, please contact support.'
+          'Profile submission failed: Please ensure all required fields, including a valid registration date, are filled correctly and try again. If the issue persists, please contact support.'
         );
       }
 
@@ -613,30 +607,20 @@ export default function RegistrationPage({ handleLogout }) {
       ];
 
       for (const { name, endpoint } of arrayFields) {
-        const items = formData[name] || [];
+        const items = (formData[name] || []).filter(item => item.file instanceof File || Object.keys(item).some(k => k !== 'file' && item[k])); // Include items with files or non-empty fields
         if (items.length > 0) {
           console.log(`Submitting ${name} data:`, items);
           const form = new FormData();
-          const dtos = items.map((item) => {
+          const dtos = items.map((item, index) => {
             if (item.file instanceof File) {
-              console.log(`Including file in ${name}:`, item.file.name);
+              console.log(`Including file in ${name} at index ${index}:`, item.file.name);
               form.append('files', item.file);
             }
-            const dto = {};
-            for (const k in item) {
-              if (k !== 'file') {
-                if (name === 'awards' && k === 'yearReceived') {
-                  dto[k] = item[k] ? parseInt(item[k], 10) : undefined;
-                } else if (name === 'mergers' && k === 'mergerYear') {
-                  dto[k] = item[k] ? parseInt(item[k], 10) : undefined;
-                } else {
-                  dto[k] = item[k];
-                }
-              }
-            }
+            const dto = validateAndNormalizeDto(item, name);
             return dto;
           });
-          if (form.getAll('files').length > 0) {
+          if (dtos.length > 0) {
+            console.log(`Sending ${name} DTOs:`, JSON.stringify(dtos, null, 2));
             form.append('dtos', JSON.stringify(dtos));
             try {
               await postForm(`${API}/nominee-details/${userId}/${endpoint}`, form, token, refreshAccessToken);
@@ -653,7 +637,6 @@ export default function RegistrationPage({ handleLogout }) {
       sessionStorage.removeItem('formData');
       sessionStorage.removeItem('registrationStep');
       sessionStorage.removeItem('completedStep');
-      setHasProfile(true);
       navigate('/dashboard');
     } catch (err) {
       console.error('Submission error:', err.message);
@@ -754,12 +737,12 @@ export default function RegistrationPage({ handleLogout }) {
               <button
                 type="button"
                 onClick={confirmSubmit}
-                disabled={hasProfile || submitting}
+                disabled={submitting}
                 className={`ml-auto bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg ${
-                  hasProfile || submitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'
+                  submitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'
                 }`}
               >
-                {submitting ? 'Submitting...' : hasProfile ? 'Already Applied' : 'Submit'}
+                {submitting ? 'Submitting...' : 'Submit'}
               </button>
             )}
           </div>

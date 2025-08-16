@@ -8,7 +8,7 @@ import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { OtpsModule } from './otps/otps.module';
 import { ConfigModule } from '@nestjs/config';
-import { ProfileModule } from './profile/profile.module'; // Added ProfileModule
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [
@@ -17,13 +17,14 @@ import { ProfileModule } from './profile/profile.module'; // Added ProfileModule
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: process.env.DB_HOST,
+      host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
+      username: process.env.DB_USERNAME || 'your-username',
+      password: process.env.DB_PASSWORD || 'your-password',
+      database: process.env.DB_NAME || 'your-database',
       autoLoadEntities: true,
       synchronize: true, // Set to false in production
+      logging: true,
     }),
     UsersModule,
     NominationsModule,
@@ -31,7 +32,7 @@ import { ProfileModule } from './profile/profile.module'; // Added ProfileModule
     AdminModule,
     AuthModule,
     OtpsModule,
-    ProfileModule, // Added to imports
+    ProfileModule,
   ],
 })
 export class AppModule {}

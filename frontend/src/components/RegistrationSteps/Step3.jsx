@@ -1,5 +1,7 @@
 import React from 'react';
 
+const VALID_MERGER_TYPES = ['Merger', 'Acquisition', 'Partnership'];
+
 export default function Step3({ data, handleChange, addArrayItem, removeArrayItem }) {
   return (
     <div className="space-y-6">
@@ -65,8 +67,9 @@ export default function Step3({ data, handleChange, addArrayItem, removeArrayIte
                     className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
                   >
                     <option value="" disabled>Select Type</option>
-                    <option value="acquisition">Acquisition</option>
-                    <option value="merger">Merger</option>
+                    {VALID_MERGER_TYPES.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -78,6 +81,8 @@ export default function Step3({ data, handleChange, addArrayItem, removeArrayIte
                     onChange={(e) => handleChange(e, 'mergers', index)}
                     className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
                     placeholder="e.g., 2020"
+                    min="1900"
+                    max={new Date().getFullYear()}
                   />
                 </div>
                 <div>

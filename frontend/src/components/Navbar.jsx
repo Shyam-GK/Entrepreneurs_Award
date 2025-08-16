@@ -1,50 +1,91 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from 'react-router-dom';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+async function fetchUserAndNominee(token, refreshTokenFn) {
+  try {
+    console.log('Fetching user with token:', token);
+    const resUser = await fetch(`${API}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log('User response status:', resUser.status);
+    if (resUser.status === 401) {
+      console.log('Received 401, attempting to refresh token');
+      const newToken = await refreshTokenFn();
+      const retryRes = await fetch(`${API}/users/me`, {
+        headers: { Authorization: `Bearer ${newToken}` },
+      });
+      if (!retryRes.ok) {
+        throw new Error(`Retry failed with status: ${retryRes.status}`);
+      }
+      return { user: await retryRes.json(), nominee: null };
+    }
+    if (!resUser.ok) {
+      throw new Error(`Failed to fetch user: ${resUser.status}`);
+    }
+    const user = await resUser.json();
+    console.log('User data:', user);
+
+    if (user.isSubmitted) {
+      const resNominee = await fetch(`${API}/nominee-details/my/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log('Nominee response status:', resNominee.status);
+      if (!resNominee.ok) {
+        throw new Error(`Failed to fetch nominee details: ${resNominee.status}`);
+      }
+      return { user, nominee: await resNominee.json() };
+    }
+    return { user, nominee: null };
+  } catch (err) {
+    console.error('Error fetching user/nominee:', err.message, err);
+    throw err;
+  }
+}
+
 export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaButton }) {
     const [isOpen, setIsOpen] = useState(false);
     const [nomineeId, setNomineeId] = useState(null);
     const navigate = useNavigate();
 
-    // Fetch current user and their nominee info
     useEffect(() => {
-        const fetchUserAndNominee = async () => {
+        const token = localStorage.getItem("accessToken");
+        console.log("Token:", token);
+        if (!token) {
+            console.error("No token found — user must log in.");
+            return;
+        }
+
+        const refreshTokenFn = async () => {
+          const refreshToken = localStorage.getItem('refreshToken');
+          if (!refreshToken) throw new Error('No refresh token found');
+          const response = await fetch(`${API}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }),
+          });
+          if (!response.ok) throw new Error('Failed to refresh token');
+          const { accessToken } = await response.json();
+          localStorage.setItem('accessToken', accessToken);
+          return accessToken;
+        };
+
+        const fetchData = async () => {
             try {
-                const token = localStorage.getItem("accessToken");
-                console.log("Token:", token); // Debug token
-                if (!token) {
-                    console.error("No token found — user must log in.");
-                    return;
-                }
-
-                // Get user info
-                const resUser = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                console.log("User response status:", resUser.status); // Debug status
-                if (!resUser.ok) throw new Error("Failed to fetch user");
-                const user = await resUser.json();
-                console.log("User data:", user); // Debug user data
-
-                if (user.isSubmitted) {
-                    // Get nominee details for this user
-                    const resNominee = await fetch(`${import.meta.env.VITE_API_URL}/admin/nominee-details/${user.id}`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
-                    if (!resNominee.ok) throw new Error("Failed to fetch nominee details");
-                    const nominee = await resNominee.json();
-                    setNomineeId(nominee.id); // store nominee id for navigation
-                }
+                const { user, nominee } = await fetchUserAndNominee(token, refreshTokenFn);
+                console.log("User data:", user);
+                if (nominee) setNomineeId(user.id); // Use user.id as nomineeId
             } catch (err) {
                 console.error("Error fetching user/nominee:", err.message, err);
             }
         };
 
-        fetchUserAndNominee();
+        fetchData();
     }, []);
 
     const goToNomineeDetails = () => {
-        if (nomineeId) navigate(`/admin/nominee-details/${nomineeId}`);
+        if (nomineeId) navigate(`/nominee-details/my/profile`);
     };
 
     return (

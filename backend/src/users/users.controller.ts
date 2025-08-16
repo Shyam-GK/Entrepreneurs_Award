@@ -6,26 +6,29 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Request } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   // ✅ Get logged-in user info
+  // src/users/users.controller.ts
+
   @Get('me')
-    async getMe(@Req() req: any) { // temporarily use 'any' to avoid TS errors
-        const userId = req.user?.id; // safe access
-        if (!userId) {
-            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-        }
-        const user = await this.usersService.findById(userId);
-        return {
-            id: user.id,
-            name: user.name,
-            photo: (user as any).photo, // cast to any if TypeORM User entity doesn't have 'photo' typed
-            isSubmitted: (user as any).isSubmitted,
-        };
+  @UseGuards(AuthGuard('jwt')) // Add this
+  async getMe(@Req() req: any) {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
+    const user = await this.usersService.findById(userId);
+    return {
+      id: user.id,
+      name: user.name,
+      isSubmitted: user.isSubmitted || false,
+    };
+  }
 
 
   // ✅ Signup

@@ -24,12 +24,17 @@ import { NomineeDetailsService } from './nominee-details.service';
 import { UpdateNomineeDetailsDto } from './dto/update-nominee-details.dto';
 import { CreateAwardDto } from './dto/create-award.dto';
 import { CreateIprDto } from './dto/create-ipr.dto';
-import { CreateMergerDto } from './dto/create-merger.dto';
+import { CreateMergerDto, MergerType } from './dto/create-merger.dto';
 import { CreateCollaborationDto } from './dto/create-collaboration.dto';
 import { Award } from './entities/award.entity';
 import { Ipr } from './entities/ipr.entity';
 import { Merger } from './entities/merger.entity';
 import { Collaboration } from './entities/collaboration.entity';
+
+// Define valid types to match database enums
+const VALID_AWARD_LEVELS = ['National', 'International', 'Industry'];
+const VALID_IPR_TYPES = ['Patent', 'Trademark', 'Copyright'];
+const VALID_COLLABORATION_TYPES = ['Academic', 'Industry', 'Government'];
 
 function ensureDirSync(dir: string) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -71,6 +76,7 @@ export class NomineeDetailsController {
   async getMyNomineeProfile(@Req() req: any) {
     const userId = req.user?.id;
     if (!userId) throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+    console.log(`Fetching profile for userId: ${userId}`);
     return this.nomineeDetailsService.findOrCreateNomineeDetailsForUser(userId);
   }
 
@@ -78,6 +84,7 @@ export class NomineeDetailsController {
   async getMyStatus(@Req() req: any) {
     const userId = req.user?.id;
     if (!userId) throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+    console.log(`Fetching status for userId: ${userId}`);
     return this.nomineeDetailsService.getMyStatus(userId);
   }
 
@@ -90,6 +97,7 @@ export class NomineeDetailsController {
     if (req.user?.id !== userId) {
       throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
     }
+    console.log(`Upserting profile for userId: ${userId}`, JSON.stringify(dto, null, 2));
     return this.nomineeDetailsService.updateMyNomineeDetails(userId, dto);
   }
 
@@ -112,6 +120,7 @@ export class NomineeDetailsController {
     if (t !== 'photo' && t !== 'registration') {
       throw new BadRequestException('Invalid upload type (photo or registration expected)');
     }
+    console.log(`Uploading file for userId: ${userId}, type: ${t}, file: ${files[0]?.originalname}`);
     return this.nomineeDetailsService.uploadFileForUser(userId, t as 'photo' | 'registration', files[0]);
   }
 
@@ -124,20 +133,45 @@ export class NomineeDetailsController {
   )
   async addAwardsForUser(
     @Param('userId') userId: string,
-    @Body() dtos: CreateAwardDto | CreateAwardDto[],
-    @UploadedFiles() files: Express.Multer.File[],
+    @Body('dtos') dtosBody: string | CreateAwardDto | CreateAwardDto[],
+    @UploadedFiles() files: Express.Multer.File[] = [],
     @Req() req: any,
   ) {
     if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
-    const awardsArray = Array.isArray(dtos) ? dtos : [dtos];
-    if (!files || files.length === 0) throw new BadRequestException('At least one file required for awards');
-    if (files.length !== awardsArray.length) {
-      throw new BadRequestException('Number of files must match number of awards');
+    
+    let awardsArray: CreateAwardDto[];
+    if (typeof dtosBody === 'string') {
+      try {
+        awardsArray = JSON.parse(dtosBody);
+      } catch (e) {
+        throw new BadRequestException('Invalid DTO format: dtos must be valid JSON');
+      }
+    } else {
+      awardsArray = Array.isArray(dtosBody) ? dtosBody : [dtosBody];
     }
+
+    if (awardsArray.length === 0) {
+      throw new BadRequestException('At least one award DTO is required');
+    }
+
+    // Validate level
+    awardsArray.forEach((dto, index) => {
+      if (dto.level && !VALID_AWARD_LEVELS.includes(dto.level)) {
+        throw new BadRequestException(`Invalid level at index ${index}: ${dto.level}. Valid values are: ${VALID_AWARD_LEVELS.join(', ')}`);
+      }
+    });
+
+    console.log(`Adding awards for userId: ${userId}, awards: ${JSON.stringify(awardsArray, null, 2)}, files: ${files.map(f => f?.originalname).join(', ')}`);
     const results: Award[] = [];
     for (let i = 0; i < awardsArray.length; i++) {
-      const result = await this.nomineeDetailsService.addAwardForUser(userId, awardsArray[i], files[i]);
-      results.push(result);
+      const file = files[i] || null;
+      try {
+        const result = await this.nomineeDetailsService.addAwardForUser(userId, awardsArray[i], file);
+        results.push(result);
+      } catch (err) {
+        console.error(`Failed to add award for userId: ${userId}, index: ${i}`, err);
+        throw new HttpException(`Failed to add award at index ${i}: ${err.message}`, HttpStatus.BAD_REQUEST);
+      }
     }
     return results;
   }
@@ -151,20 +185,45 @@ export class NomineeDetailsController {
   )
   async addIprsForUser(
     @Param('userId') userId: string,
-    @Body() dtos: CreateIprDto | CreateIprDto[],
-    @UploadedFiles() files: Express.Multer.File[],
+    @Body('dtos') dtosBody: string | CreateIprDto | CreateIprDto[],
+    @UploadedFiles() files: Express.Multer.File[] = [],
     @Req() req: any,
   ) {
     if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
-    const iprsArray = Array.isArray(dtos) ? dtos : [dtos];
-    if (!files || files.length === 0) throw new BadRequestException('At least one file required for IPRs');
-    if (files.length !== iprsArray.length) {
-      throw new BadRequestException('Number of files must match number of IPRs');
+    
+    let iprsArray: CreateIprDto[];
+    if (typeof dtosBody === 'string') {
+      try {
+        iprsArray = JSON.parse(dtosBody);
+      } catch (e) {
+        throw new BadRequestException('Invalid DTO format: dtos must be valid JSON');
+      }
+    } else {
+      iprsArray = Array.isArray(dtosBody) ? dtosBody : [dtosBody];
     }
+
+    if (iprsArray.length === 0) {
+      throw new BadRequestException('At least one IPR DTO is required');
+    }
+
+    // Validate type
+    iprsArray.forEach((dto, index) => {
+      if (dto.type && !VALID_IPR_TYPES.includes(dto.type)) {
+        throw new BadRequestException(`Invalid type at index ${index}: ${dto.type}. Valid values are: ${VALID_IPR_TYPES.join(', ')}`);
+      }
+    });
+
+    console.log(`Adding IPRs for userId: ${userId}, IPRs: ${JSON.stringify(iprsArray, null, 2)}, files: ${files.map(f => f?.originalname).join(', ')}`);
     const results: Ipr[] = [];
     for (let i = 0; i < iprsArray.length; i++) {
-      const result = await this.nomineeDetailsService.addIprForUser(userId, iprsArray[i], files[i]);
-      results.push(result);
+      const file = files[i] || null;
+      try {
+        const result = await this.nomineeDetailsService.addIprForUser(userId, iprsArray[i], file);
+        results.push(result);
+      } catch (err) {
+        console.error(`Failed to add IPR for userId: ${userId}, index: ${i}`, err);
+        throw new HttpException(`Failed to add IPR at index ${i}: ${err.message}`, HttpStatus.BAD_REQUEST);
+      }
     }
     return results;
   }
@@ -178,20 +237,45 @@ export class NomineeDetailsController {
   )
   async addMergersForUser(
     @Param('userId') userId: string,
-    @Body() dtos: CreateMergerDto | CreateMergerDto[],
-    @UploadedFiles() files: Express.Multer.File[],
+    @Body('dtos') dtosBody: string | CreateMergerDto | CreateMergerDto[],
+    @UploadedFiles() files: Express.Multer.File[] = [],
     @Req() req: any,
   ) {
     if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
-    const mergersArray = Array.isArray(dtos) ? dtos : [dtos];
-    if (!files || files.length === 0) throw new BadRequestException('At least one file required for mergers');
-    if (files.length !== mergersArray.length) {
-      throw new BadRequestException('Number of files must match number of mergers');
+    
+    let mergersArray: CreateMergerDto[];
+    if (typeof dtosBody === 'string') {
+      try {
+        mergersArray = JSON.parse(dtosBody);
+      } catch (e) {
+        throw new BadRequestException('Invalid DTO format: dtos must be valid JSON');
+      }
+    } else {
+      mergersArray = Array.isArray(dtosBody) ? dtosBody : [dtosBody];
     }
+
+    if (mergersArray.length === 0) {
+      throw new BadRequestException('At least one merger DTO is required');
+    }
+
+    // Validate mergerType
+    mergersArray.forEach((dto, index) => {
+      if (dto.mergerType && !Object.values(MergerType).includes(dto.mergerType)) {
+        throw new BadRequestException(`Invalid mergerType at index ${index}: ${dto.mergerType}. Valid values are: ${Object.values(MergerType).join(', ')}`);
+      }
+    });
+
+    console.log(`Adding mergers for userId: ${userId}, mergers: ${JSON.stringify(mergersArray, null, 2)}, files: ${files.map(f => f?.originalname).join(', ')}`);
     const results: Merger[] = [];
     for (let i = 0; i < mergersArray.length; i++) {
-      const result = await this.nomineeDetailsService.addMergerForUser(userId, mergersArray[i], files[i]);
-      results.push(result);
+      const file = files[i] || null;
+      try {
+        const result = await this.nomineeDetailsService.addMergerForUser(userId, mergersArray[i], file);
+        results.push(result);
+      } catch (err) {
+        console.error(`Failed to add merger for userId: ${userId}, index: ${i}`, err);
+        throw new HttpException(`Failed to add merger at index ${i}: ${err.message}`, HttpStatus.BAD_REQUEST);
+      }
     }
     return results;
   }
@@ -205,26 +289,52 @@ export class NomineeDetailsController {
   )
   async addCollaborationsForUser(
     @Param('userId') userId: string,
-    @Body() dtos: CreateCollaborationDto | CreateCollaborationDto[],
-    @UploadedFiles() files: Express.Multer.File[],
+    @Body('dtos') dtosBody: string | CreateCollaborationDto | CreateCollaborationDto[],
+    @UploadedFiles() files: Express.Multer.File[] = [],
     @Req() req: any,
   ) {
     if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
-    const collabsArray = Array.isArray(dtos) ? dtos : [dtos];
-    if (!files || files.length === 0) throw new BadRequestException('At least one file required for collaborations');
-    if (files.length !== collabsArray.length) {
-      throw new BadRequestException('Number of files must match number of collaborations');
+    
+    let collabsArray: CreateCollaborationDto[];
+    if (typeof dtosBody === 'string') {
+      try {
+        collabsArray = JSON.parse(dtosBody);
+      } catch (e) {
+        throw new BadRequestException('Invalid DTO format: dtos must be valid JSON');
+      }
+    } else {
+      collabsArray = Array.isArray(dtosBody) ? dtosBody : [dtosBody];
     }
+
+    if (collabsArray.length === 0) {
+      throw new BadRequestException('At least one collaboration DTO is required');
+    }
+
+    // Validate type
+    collabsArray.forEach((dto, index) => {
+      if (dto.type && !VALID_COLLABORATION_TYPES.includes(dto.type)) {
+        throw new BadRequestException(`Invalid type at index ${index}: ${dto.type}. Valid values are: ${VALID_COLLABORATION_TYPES.join(', ')}`);
+      }
+    });
+
+    console.log(`Adding collaborations for userId: ${userId}, collaborations: ${JSON.stringify(collabsArray, null, 2)}, files: ${files.map(f => f?.originalname).join(', ')}`);
     const results: Collaboration[] = [];
     for (let i = 0; i < collabsArray.length; i++) {
-      const result = await this.nomineeDetailsService.addCollaborationForUser(userId, collabsArray[i], files[i]);
-      results.push(result);
+      const file = files[i] || null;
+      try {
+        const result = await this.nomineeDetailsService.addCollaborationForUser(userId, collabsArray[i], file);
+        results.push(result);
+      } catch (err) {
+        console.error(`Failed to add collaboration for userId: ${userId}, index: ${i}`, err);
+        throw new HttpException(`Failed to add collaboration at index ${i}: ${err.message}`, HttpStatus.BAD_REQUEST);
+      }
     }
     return results;
   }
 
   @Get('uploads/:fileId')
   async getFile(@Param('fileId') fileId: string) {
+    console.log(`Fetching file: ${fileId}`);
     return this.nomineeDetailsService.getFile(fileId);
   }
 }

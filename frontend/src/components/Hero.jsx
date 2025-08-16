@@ -18,8 +18,8 @@ export default function Hero({ isSubmitted }) {
                         {/* Buttons are centered on mobile, start-aligned otherwise */}
                         <div className="flex flex-wrap gap-6 justify-center md:justify-start mt-10">
                             {isSubmitted ? (
-                                <span className="action-button text-white font-bold py-4 px-8 rounded-xl shadow-lg text-center text-lg w-60 bg-green-500 blur-md opacity-75 cursor-not-allowed">
-                                    Application Submitted!
+                                <span className="action-button text-white font-bold py-4 px-8 rounded-xl shadow-lg text-center text-lg w-60 bg-green-500 filter blur-[1px] opacity-90 cursor-not-allowed">
+                                    Registered!
                                 </span>
                             ) : (
                                 <Link
