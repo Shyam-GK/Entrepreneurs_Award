@@ -1,11 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  HttpException,
-  HttpStatus,
-  StreamableFile,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, HttpException, HttpStatus, StreamableFile } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like as TypeormLike } from 'typeorm';
 import { NomineeDetails } from './entities/nominee-details.entity';
@@ -16,7 +9,7 @@ import { Collaboration } from './entities/collaboration.entity';
 import { UpdateNomineeDetailsDto } from './dto/update-nominee-details.dto';
 import { CreateAwardDto } from './dto/create-award.dto';
 import { CreateIprDto } from './dto/create-ipr.dto';
-import { CreateMergerDto } from './/dto/create-merger.dto';
+import { CreateMergerDto } from './dto/create-merger.dto';
 import { CreateCollaborationDto } from './dto/create-collaboration.dto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -41,7 +34,6 @@ export class NomineeDetailsService {
     private readonly nominationsService: NominationsService,
   ) {}
 
-  /** Ensure a NomineeDetails row exists for this user; create one if missing */
   async findOrCreateNomineeDetailsForUser(userId: string): Promise<NomineeDetails> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
@@ -59,24 +51,17 @@ export class NomineeDetailsService {
     return nominee;
   }
 
-  /** Status info so the UI can disable "Apply Now" */
-    async getMyStatus(userId: string) {
-      const nominee = await this.nomineeRepo.findOne({
-        where: { user: { id: userId } },
-      });
+  async getMyStatus(userId: string) {
+    const nominee = await this.nomineeRepo.findOne({
+      where: { user: { id: userId } },
+    });
+    const hasProfile = !!nominee;
+    return { hasProfile };
+  }
 
-      // Basic, safe status without adding new DB columns.
-      // You can extend this to include a real "locked" flag if your entity has it.
-      const hasProfile = !!nominee;
-      return { hasProfile };
-    }
-
-    /** Upsert nominee details for the given userId */
   async updateMyNomineeDetails(userId: string, dto: UpdateNomineeDetailsDto): Promise<NomineeDetails> {
-    // Ensure the user exists
     const user = await this.userRepo.findOneOrFail({ where: { id: userId } });
 
-    // Find or create nominee details
     let nominee = await this.nomineeRepo.findOne({
       where: { user: { id: userId } },
       relations: ['user'],
@@ -93,13 +78,11 @@ export class NomineeDetailsService {
 
     const saved = await this.nomineeRepo.save(nominee);
 
-    // Update the user's isSubmitted flag to true
     if (!user.isSubmitted) {
       user.isSubmitted = true;
       await this.userRepo.save(user);
     }
 
-    // Update nomination status if needed
     if (saved?.user?.email) {
       await this.nominationsService.updateNominationStatus(saved.user.email, saved.user.id);
     }
@@ -107,8 +90,6 @@ export class NomineeDetailsService {
     return saved;
   }
 
-
-  /** Internal: verify nominee belongs to user (kept for completeness) */
   private async findNomineeOwnedByUser(nomineeId: string, userId: string): Promise<NomineeDetails> {
     const nominee = await this.nomineeRepo.findOne({
       where: { id: nomineeId, user: { id: userId } },
@@ -119,14 +100,13 @@ export class NomineeDetailsService {
     return nominee;
   }
 
-  /** Upload via userId (what your controller uses) */
   async uploadFileForUser(
     userId: string,
     type: 'photo' | 'registration',
     file?: Express.Multer.File,
   ) {
     const nominee = await this.findOrCreateNomineeDetailsForUser(userId);
-    if (!file) return { message: 'No file uploaded, skipping' };  // Make optional
+    if (!file) return { message: 'No file uploaded, skipping' };
 
     const relPath = toRelUnix(file.path);
     if (type === 'photo') nominee.photo = relPath;
@@ -142,7 +122,6 @@ export class NomineeDetailsService {
     return { filePath: relPath };
   }
 
-  /** Child rows via userId (backend finds/creates nominee row) */
   async addAwardForUser(userId: string, dto: CreateAwardDto, file: Express.Multer.File) {
     const nominee = await this.findOrCreateNomineeDetailsForUser(userId);
     const award = this.awardRepo.create({
@@ -207,11 +186,9 @@ export class NomineeDetailsService {
     return this.collabRepo.save(collab);
   }
 
-  /** Stream back any stored file by ID (suffix search) */
   async getFile(fileId: string): Promise<StreamableFile> {
     const searchPattern = TypeormLike(`%${fileId}%`);
 
-    // nominee_details table fields
     const nd = await this.nomineeRepo.findOne({
       where: [{ photo: searchPattern }, { registrationCertificate: searchPattern }],
     });
@@ -228,7 +205,6 @@ export class NomineeDetailsService {
       }
     }
 
-    // child tables
     const repos = [this.awardRepo, this.iprRepo, this.mergerRepo, this.collabRepo];
     for (const repo of repos) {
       const rec: any = await repo.findOne({ where: { filePath: searchPattern } as any });

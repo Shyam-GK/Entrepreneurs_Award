@@ -1,121 +1,113 @@
-// X:\Projects\Entrepreneur\entrepreneur-award\src\nominee-details\dto\update-nominee-details.dto.ts
-import { IsInt, IsString, IsDate, IsNumber, IsBoolean, IsEnum, IsOptional, IsUrl } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsNumber, IsBoolean, IsEnum, Matches } from 'class-validator';
 import { FounderType } from '../../enums/enums';
 
 export class UpdateNomineeDetailsDto {
-  @IsInt()
   @IsOptional()
+  @IsInt()
   passoutYear?: number;
 
-  @IsString()
   @IsOptional()
-  photo?: string;
-
   @IsString()
-  @IsOptional()
   companyName?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   companyType?: string;
 
-  @IsUrl()
   @IsOptional()
+  @IsString()
   companyWebsite?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   registrationNumber?: string;
 
-  @IsDate()
   @IsOptional()
-  registrationDate?: Date;
-
   @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'registrationDate must be in YYYY-MM-DD format' })
+  registrationDate?: string;
+
   @IsOptional()
+  @IsString()
   registeredAddress?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   registrationPlace?: string;
 
-  @IsString()
   @IsOptional()
-  registrationCertificate?: string;
-
   @IsEnum(FounderType)
-  @IsOptional()
   founderType?: FounderType;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   companyDescription?: string;
 
-  @IsInt()
   @IsOptional()
+  @IsInt()
   yearOfEstablishment?: number;
 
-  @IsInt()
   @IsOptional()
+  @IsInt()
   totalEmployees?: number;
 
-  @IsNumber()
   @IsOptional()
+  @IsNumber()
   annualTurnover?: number;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   businessDomain?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   keyInnovations?: string;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   isFirstGeneration?: boolean;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   isUnrelatedToFamily?: boolean;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   hasIprs?: boolean;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   hasMergers?: boolean;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   hasCollaborations?: boolean;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   hasAwards?: boolean;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   hasForeignPresence?: boolean;
 
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   hasSustainability?: boolean;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   iprDescription?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   foreignDescription?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   sustainabilityDescription?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   ethicsDescription?: string;
 }

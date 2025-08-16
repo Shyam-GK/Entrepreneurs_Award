@@ -33,7 +33,7 @@ async function postJson(url, body, token, refreshTokenFn) {
   let currentToken = token;
   try {
     console.log('Sending request to:', url, 'with token:', currentToken);
-    console.log('Request body:', body);
+    console.log('Request body:', JSON.stringify(body, null, 2));
     const res = await fetch(url, {
       method: 'POST',
       headers: {
@@ -112,7 +112,7 @@ async function postForm(url, formData, token, refreshTokenFn) {
       throw new Error(text || `Upload failed: ${res.status}`);
     }
     const ct = res.headers.get('content-type') || '';
-    return ct.includes('application/json') ? retryRes.json() : retryRes.text();
+    return ct.includes('application/json') ? res.json() : res.text();
   } catch (err) {
     console.error('postForm error:', err.message);
     throw err;
@@ -142,7 +142,7 @@ export default function RegistrationPage({ handleLogout }) {
           iprs: [],
           mergers: [],
           collaborations: [],
-          founderType: 'Founder', // Default value to prevent submission failure
+          founderType: 'Founder',
         };
   });
 
@@ -425,6 +425,28 @@ export default function RegistrationPage({ handleLogout }) {
       if (k === 'founderType' && v) {
         v = v === 'Founder' || v === 'Co-Founder' ? v : 'Founder';
       }
+      if (k === 'registrationDate') {
+        if (!v) {
+          console.error('registrationDate is empty');
+          setError('Registration date is required. Please select a valid date using the date picker.');
+          return raw;
+        }
+        try {
+          const date = new Date(v);
+          if (isNaN(date.getTime())) {
+            console.error(`Invalid date format for registrationDate: ${v}`);
+            setError('Invalid registration date format. Please select a valid date using the date picker.');
+            return raw;
+          }
+          // Send as YYYY-MM-DD string (e.g., "2025-07-01")
+          v = v; // Keep as is (already validated as YYYY-MM-DD)
+          console.log(`Processed registrationDate as YYYY-MM-DD string: ${v}`);
+        } catch (err) {
+          console.error(`Error parsing registrationDate: ${v}`, err);
+          setError('Error parsing registration date. Please select a valid date using the date picker.');
+          return raw;
+        }
+      }
       if (v !== undefined && !(v instanceof File)) raw[k] = v;
     });
 
@@ -467,7 +489,7 @@ export default function RegistrationPage({ handleLogout }) {
       else delete raw[k];
     });
 
-    console.log('Built profile payload:', raw);
+    console.log('Built profile payload:', JSON.stringify(raw, null, 2));
     if (!raw.founderType) {
       console.error('founderType is missing in payload, defaulting to Founder');
       raw.founderType = 'Founder';
@@ -483,6 +505,40 @@ export default function RegistrationPage({ handleLogout }) {
     }
     setSubmitting(true);
     setError('');
+
+    // Validate registrationDate before submission
+    const registrationDate = formData.registrationDate;
+    if (!registrationDate) {
+      console.error('registrationDate is empty');
+      setError('Registration date is required. Please select a valid date using the date picker.');
+      setSubmitting(false);
+      setIsModalOpen(false);
+      return;
+    }
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(registrationDate)) {
+      console.error(`Invalid registrationDate format: ${registrationDate}`);
+      setError('Invalid registration date format. Please select a valid date (YYYY-MM-DD).');
+      setSubmitting(false);
+      setIsModalOpen(false);
+      return;
+    }
+    const date = new Date(registrationDate);
+    if (isNaN(date.getTime())) {
+      console.error(`Invalid registrationDate value: ${registrationDate}`);
+      setError('Invalid registration date. Please select a valid date using the date picker.');
+      setSubmitting(false);
+      setIsModalOpen(false);
+      return;
+    }
+    if (date.getFullYear() < 1900 || date.getFullYear() > new Date().getFullYear()) {
+      console.error(`registrationDate out of range: ${registrationDate}`);
+      setError('Registration date must be between 1900 and today.');
+      setSubmitting(false);
+      setIsModalOpen(false);
+      return;
+    }
+
     try {
       let token = localStorage.getItem('accessToken');
       if (!token) {
@@ -513,7 +569,21 @@ export default function RegistrationPage({ handleLogout }) {
       // Step 1: Upload profile data
       console.log('Submitting profile data for user:', userId);
       const profilePayload = buildProfilePayload();
-      await postJson(`${API}/nominee-details/${userId}/profile`, profilePayload, token, refreshAccessToken);
+      if (Object.keys(profilePayload).length === 0 && profilePayload.constructor === Object) {
+        console.error('Profile payload is empty due to validation errors');
+        throw new Error('Failed to build profile payload. Please check your input data.');
+      }
+      console.log('Profile payload being sent:', JSON.stringify(profilePayload, null, 2));
+
+      // Send as YYYY-MM-DD string
+      try {
+        await postJson(`${API}/nominee-details/${userId}/profile`, profilePayload, token, refreshAccessToken);
+      } catch (err) {
+        console.error('Profile submission failed:', err.message);
+        throw new Error(
+          'Profile submission failed: The server is unable to process the registration date. Please ensure a valid date is selected and try again. If the issue persists, please contact support.'
+        );
+      }
 
       // Step 2: Upload files (photo, registrationCertificate)
       const fileFields = [
@@ -525,7 +595,12 @@ export default function RegistrationPage({ handleLogout }) {
           console.log(`Uploading file for ${type}:`, formData[name].name);
           const form = new FormData();
           form.append('files', formData[name]);
-          await postForm(`${API}/nominee-details/${userId}/upload/${type}`, form, token, refreshAccessToken);
+          try {
+            await postForm(`${API}/nominee-details/${userId}/upload/${type}`, form, token, refreshAccessToken);
+          } catch (err) {
+            console.error(`File upload failed for ${type}:`, err.message);
+            throw new Error(`File upload failed for ${type}: ${err.message}`);
+          }
         }
       }
 
@@ -563,7 +638,12 @@ export default function RegistrationPage({ handleLogout }) {
           });
           if (form.getAll('files').length > 0) {
             form.append('dtos', JSON.stringify(dtos));
-            await postForm(`${API}/nominee-details/${userId}/${endpoint}`, form, token, refreshAccessToken);
+            try {
+              await postForm(`${API}/nominee-details/${userId}/${endpoint}`, form, token, refreshAccessToken);
+            } catch (err) {
+              console.error(`Submission failed for ${name}:`, err.message);
+              throw new Error(`Submission failed for ${name}: ${err.message}`);
+            }
           }
         }
       }
@@ -584,6 +664,10 @@ export default function RegistrationPage({ handleLogout }) {
           errorMessage = Array.isArray(parsedError.message)
             ? parsedError.message.join(', ')
             : parsedError.message;
+          if (parsedError.message.includes('registrationDate must be a Date instance')) {
+            errorMessage =
+              'The server is unable to process the registration date. Please ensure a valid date is selected and try again. If the issue persists, please contact support.';
+          }
         }
       } catch {
         // Not a JSON error, use raw message

@@ -35,7 +35,6 @@ function ensureDirSync(dir: string) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-/** sanitize + prefix */
 function makePrefixedName(id: string, original: string) {
   const ext = path.extname(original || '');
   const base = path.basename(original || '', ext).replace(/[^a-zA-Z0-9\-_.]/g, '_');
@@ -68,7 +67,6 @@ function storageFor(folderName: string) {
 export class NomineeDetailsController {
   constructor(private readonly nomineeDetailsService: NomineeDetailsService) {}
 
-  /** Returns or creates the caller's nominee row */
   @Get('my/profile')
   async getMyNomineeProfile(@Req() req: any) {
     const userId = req.user?.id;
@@ -76,7 +74,6 @@ export class NomineeDetailsController {
     return this.nomineeDetailsService.findOrCreateNomineeDetailsForUser(userId);
   }
 
-  /** Status used by frontend to disable "Apply" if profile exists */
   @Get('my/status')
   async getMyStatus(@Req() req: any) {
     const userId = req.user?.id;
@@ -84,7 +81,6 @@ export class NomineeDetailsController {
     return this.nomineeDetailsService.getMyStatus(userId);
   }
 
-  /** Upsert nominee profile (pure JSON, no files) */
   @Post(':userId/profile')
   async upsertProfileForUser(
     @Param('userId') userId: string,
@@ -92,12 +88,11 @@ export class NomineeDetailsController {
     @Req() req: any,
   ) {
     if (req.user?.id !== userId) {
-      return { message: 'Not authorized for this user' };
+      throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
     }
     return this.nomineeDetailsService.updateMyNomineeDetails(userId, dto);
   }
 
-  /** Upload single file for nominee_details fields: type = 'photo' | 'registration' */
   @Post(':userId/upload/:type')
   @UseInterceptors(
     FilesInterceptor('files', 1, {
@@ -111,7 +106,7 @@ export class NomineeDetailsController {
     @UploadedFiles() files: Express.Multer.File[],
     @Req() req: any,
   ) {
-    if (req.user?.id !== userId) return { message: 'Not authorized for this user' };
+    if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
     if (!files || files.length === 0) throw new BadRequestException('No file uploaded');
     const t = (type || '').toLowerCase();
     if (t !== 'photo' && t !== 'registration') {
@@ -120,7 +115,6 @@ export class NomineeDetailsController {
     return this.nomineeDetailsService.uploadFileForUser(userId, t as 'photo' | 'registration', files[0]);
   }
 
-  /** Add multiple awards */
   @Post(':userId/awards')
   @UseInterceptors(
     FilesInterceptor('files', 20, {
@@ -134,7 +128,7 @@ export class NomineeDetailsController {
     @UploadedFiles() files: Express.Multer.File[],
     @Req() req: any,
   ) {
-    if (req.user?.id !== userId) return { message: 'Not authorized for this user' };
+    if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
     const awardsArray = Array.isArray(dtos) ? dtos : [dtos];
     if (!files || files.length === 0) throw new BadRequestException('At least one file required for awards');
     if (files.length !== awardsArray.length) {
@@ -148,7 +142,6 @@ export class NomineeDetailsController {
     return results;
   }
 
-  /** Add multiple IPRs */
   @Post(':userId/iprs')
   @UseInterceptors(
     FilesInterceptor('files', 20, {
@@ -162,7 +155,7 @@ export class NomineeDetailsController {
     @UploadedFiles() files: Express.Multer.File[],
     @Req() req: any,
   ) {
-    if (req.user?.id !== userId) return { message: 'Not authorized for this user' };
+    if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
     const iprsArray = Array.isArray(dtos) ? dtos : [dtos];
     if (!files || files.length === 0) throw new BadRequestException('At least one file required for IPRs');
     if (files.length !== iprsArray.length) {
@@ -176,7 +169,6 @@ export class NomineeDetailsController {
     return results;
   }
 
-  /** Add multiple mergers */
   @Post(':userId/mergers')
   @UseInterceptors(
     FilesInterceptor('files', 20, {
@@ -190,7 +182,7 @@ export class NomineeDetailsController {
     @UploadedFiles() files: Express.Multer.File[],
     @Req() req: any,
   ) {
-    if (req.user?.id !== userId) return { message: 'Not authorized for this user' };
+    if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
     const mergersArray = Array.isArray(dtos) ? dtos : [dtos];
     if (!files || files.length === 0) throw new BadRequestException('At least one file required for mergers');
     if (files.length !== mergersArray.length) {
@@ -204,7 +196,6 @@ export class NomineeDetailsController {
     return results;
   }
 
-  /** Add multiple collaborations */
   @Post(':userId/collaborations')
   @UseInterceptors(
     FilesInterceptor('files', 20, {
@@ -218,7 +209,7 @@ export class NomineeDetailsController {
     @UploadedFiles() files: Express.Multer.File[],
     @Req() req: any,
   ) {
-    if (req.user?.id !== userId) return { message: 'Not authorized for this user' };
+    if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
     const collabsArray = Array.isArray(dtos) ? dtos : [dtos];
     if (!files || files.length === 0) throw new BadRequestException('At least one file required for collaborations');
     if (files.length !== collabsArray.length) {
@@ -232,14 +223,12 @@ export class NomineeDetailsController {
     return results;
   }
 
-  /** File fetch passthrough */
   @Get('uploads/:fileId')
   async getFile(@Param('fileId') fileId: string) {
     return this.nomineeDetailsService.getFile(fileId);
   }
 }
 
-/** storage for /upload/:type where type is 'photo' or 'registration' */
 function storageForDynamic() {
   return diskStorage({
     destination: (req, file, cb) => {

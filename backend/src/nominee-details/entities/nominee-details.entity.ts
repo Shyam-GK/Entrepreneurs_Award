@@ -1,4 +1,4 @@
-// src/nominee-details/entities/nominee-details.entity.ts
+// X:\Projects\Entrepreneur\entrepreneur-award\src\nominee-details\entities\nominee-details.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Award } from './award.entity';
@@ -33,8 +33,8 @@ export class NomineeDetails {
   @Column({ type: 'text', nullable: true })
   registrationNumber: string | null;
 
-  @Column({ type: 'date', nullable: true })
-  registrationDate: Date | null;
+  @Column({ type: 'text', nullable: true }) // Changed from 'date' to 'text'
+  registrationDate: string | null; // Changed type from Date to string
 
   @Column({ type: 'text', nullable: true })
   registeredAddress: string | null;
