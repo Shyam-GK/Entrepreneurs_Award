@@ -9,7 +9,7 @@ export default function LandingHero() {
         <div className="w-full md:w-1/2 text-center md:text-left">
           <div className="py-8">
             <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-snug">
-              Entrepreneur Awards
+              Entrepreneur Awards-2025
             </h2>
             <p className="mt-2 text-lg text-gray-700">Recognizing innovation and leadership.</p>
           </div>

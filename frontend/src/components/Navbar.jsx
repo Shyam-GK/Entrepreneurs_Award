@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaButton }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -11,14 +11,20 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
         const fetchUserAndNominee = async () => {
             try {
                 const token = localStorage.getItem("accessToken");
-                if (!token) return;
+                console.log("Token:", token); // Debug token
+                if (!token) {
+                    console.error("No token found — user must log in.");
+                    return;
+                }
 
                 // Get user info
                 const resUser = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
+                console.log("User response status:", resUser.status); // Debug status
                 if (!resUser.ok) throw new Error("Failed to fetch user");
                 const user = await resUser.json();
+                console.log("User data:", user); // Debug user data
 
                 if (user.isSubmitted) {
                     // Get nominee details for this user
@@ -30,7 +36,7 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
                     setNomineeId(nominee.id); // store nominee id for navigation
                 }
             } catch (err) {
-                console.error("Error fetching user/nominee:", err);
+                console.error("Error fetching user/nominee:", err.message, err);
             }
         };
 

@@ -1,8 +1,101 @@
-Dear {{nomineeName}},
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Entrepreneur Award Nomination</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @media (max-width: 600px) {
+      .container { width: 100% !important; }
+      .content { padding: 20px !important; }
+      .cta { display:block !important; width:100% !important; }
+    }
+    a { text-decoration: none; }
+  </style>
+</head>
+<body style="margin:0; padding:0; background:#f6f7fb; font-family: Arial, Helvetica, sans-serif; color:#111827;">
+  <center>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f6f7fb;">
+      <tr>
+        <td align="center" style="padding:24px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="width:600px; max-width:100%; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+            <!-- Header -->
+            <tr>
+              <td align="left" style="padding:24px 24px 0 24px;">
+                <div style="font-size:18px; font-weight:600; color:#111827;">Entrepreneur Award</div>
+              </td>
+            </tr>
 
-Congratulations! You have been nominated for the Entrepreneur Award by {{nominatorName}}.
+            <!-- Body -->
+            <tr>
+              <td class="content" style="padding:24px;">
+                <p style="margin:0 0 12px 0; font-size:16px;">Dear {{nomineeName}},</p>
 
-Please complete your application by visiting: {{applyUrl}}
+                <p style="margin:0 0 16px 0; font-size:16px; line-height:1.6;">
+                  Congratulations! You have been nominated for the <strong>Entrepreneur Award</strong> by <strong>{{nominatorName}}</strong>.
+                  This recognition highlights your achievements and impact as an entrepreneur.
+                </p>
 
-Best regards,
-Entrepreneur Award Team
+                <!-- Primary CTA -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 8px 0;">
+                  <tr>
+                    <td align="left">
+                      <a href="{{applyUrl}}" class="cta"
+                         style="display:inline-block; padding:12px 20px; border-radius:8px; background:#111827; color:#ffffff; font-weight:600; font-size:14px;">
+                        Apply Now
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Steps -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top:8px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px;">
+                  <tr>
+                    <td style="padding:16px 16px 8px 16px;">
+                      <div style="font-size:15px; font-weight:600; margin-bottom:8px;">Next Steps</div>
+                      <ol style="margin:0; padding-left:18px; color:#374151; line-height:1.7; font-size:14px;">
+                        <li><strong>Sign Up / Log In:</strong> Create your account or log in to access the award portal.</li>
+                        <li><strong>Apply Now:</strong> Complete your application with your achievements, innovations, and impact narrative.</li>
+                        <li><strong>Nominate Others (Optional):</strong> Recognize fellow entrepreneurs by submitting nominations.</li>
+                        <li><strong>View Status:</strong> Track your application progress and any updates from the review committee.</li>
+                      </ol>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Deadline (optional) -->
+                {{#if deadlineDate}}
+                <p style="margin:16px 0 0 0; font-size:14px; color:#b45309; background:#fff7ed; border:1px solid #fde68a; padding:10px 12px; border-radius:8px;">
+                  Reminder: Please submit your application by <strong>{{deadlineDate}}</strong>.
+                </p>
+                {{/if}}
+
+                <hr style="border:none; border-top:1px solid #e5e7eb; margin:20px 0;">
+
+                <p style="margin:0 0 8px 0; font-size:14px; color:#4b5563;">
+                  Need assistance? Reach us at {{supportEmail}}.
+                </p>
+
+                <p style="margin:0; font-size:12px; color:#9ca3af;">
+                  Best regards,<br>
+                  Entrepreneur Award Team
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td align="center" style="padding:12px 24px 24px 24px;">
+                <p style="margin:0; font-size:11px; color:#9ca3af;">
+                  You received this email because you were nominated by {{nominatorName}} for the Entrepreneur Award.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </center>
+</body>
+</html>

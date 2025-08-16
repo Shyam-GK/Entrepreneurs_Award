@@ -20,7 +20,9 @@ export class OtpsService {
 
   async generateOtp(email: string): Promise<void> {
     const user = await this.usersService.findByEmail(email);
-    const otp = crypto.randomBytes(3).toString('hex').toUpperCase();
+    // Generate 6-digit numeric OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await this.otpsRepository.delete({ user: { id: user.id } });
@@ -31,7 +33,12 @@ export class OtpsService {
       to: email,
       subject: 'Password Reset OTP',
       template: 'otp',
-      context: { otp, name: user.name },
+      context: { 
+        otp, 
+        expiresIn: 10, 
+        name: user.name,
+        supportEmail: process.env.SUPPORT_EMAIL
+       },
     });
   }
 

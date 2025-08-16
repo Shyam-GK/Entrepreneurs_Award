@@ -18,6 +18,7 @@ export default function Dashboard({ handleLogout }) {
         const fetchNominationsAndUser = async () => {
             try {
                 const token = localStorage.getItem("accessToken");
+                console.log("Token:", token); // Debug token
                 if (!token) {
                     console.error("No token found — user must log in.");
                     return;
@@ -27,10 +28,11 @@ export default function Dashboard({ handleLogout }) {
                 const resUser = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
+                console.log("User response status:", resUser.status); // Debug status
                 if (!resUser.ok) throw new Error("Failed to fetch user");
                 const user = await resUser.json();
+                console.log("User data:", user); // Debug user data
                 setIsSubmitted(user.isSubmitted || false);
-                console.log("Fetched user data:", user); // Debug to confirm isSubmitted
 
                 // Fetch nominations
                 const res = await fetch(`${import.meta.env.VITE_API_URL}/nominations`, {
@@ -56,7 +58,7 @@ export default function Dashboard({ handleLogout }) {
 
                 setNominations(formattedData);
             } catch (err) {
-                console.error("Error fetching nominations or user:", err);
+                console.error("Error fetching nominations or user:", err.message, err);
             }
         };
 

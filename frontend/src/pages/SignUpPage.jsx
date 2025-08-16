@@ -2,18 +2,16 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import LandingNavbar from '../components/LandingNavbar';
 
-export default function SignUpPage({ handleLogin }) {
+export default function SignUpPage() {
     const navigate = useNavigate();
 
-    // 1. Use state to manage all form fields together
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        password: '',
+        mobile: '',
         course: ''
     });
 
-    // 2. A single handler to update the state for any field
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prevData => ({
@@ -22,15 +20,34 @@ export default function SignUpPage({ handleLogin }) {
         }));
     };
 
-    const handleSignUpSubmit = (e) => {
+    const handleSignUpSubmit = async (e) => {
         e.preventDefault();
-        // 3. Log the collected data upon submission
-        console.log('Form data submitted:', formData);
-        console.log('Redirecting to Forgot Password...');
-        navigate('/forgot-password');
-    };
 
-    // Placeholder for scrollToCriteria (no effect on signup page)
+        try {
+            const res = await fetch("http://localhost:3000/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+            });
+
+            if (res.ok) {
+            const data = await res.json();
+            console.log("Signup success:", data);
+
+            // After successful signup → navigate to forgot-password
+            navigate("/forgot-password", { state: { email: formData.email } });
+            } else {
+            const err = await res.json();
+            console.error("Signup failed:", err);
+            alert(err.message || "Signup failed");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("Something went wrong");
+        }
+        };
+
+
     const scrollToCriteria = () => {};
 
     return (
@@ -48,7 +65,6 @@ export default function SignUpPage({ handleLogin }) {
                         </p>
                     </div>
                     <form className="mt-8 space-y-6" onSubmit={handleSignUpSubmit}>
-                        {/* 4. Added Name Input Field */}
                         <input
                             name="name"
                             type="text"
@@ -68,16 +84,16 @@ export default function SignUpPage({ handleLogin }) {
                             placeholder="Email address"
                         />
                         <input
-                            name="password"
-                            type="password"
+                            name="mobile"
+                            type="tel"
                             required
-                            value={formData.password}
+                            pattern="[0-9]{10}"
+                            value={formData.mobile}
                             onChange={handleChange}
                             className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg"
-                            placeholder="Password"
+                            placeholder="Mobile Number"
                         />
 
-                        {/* 5. Added Course Dropdown Menu */}
                         <select
                             name="course"
                             required
