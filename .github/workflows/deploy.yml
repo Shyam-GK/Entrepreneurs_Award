@@ -1,143 +1,31 @@
-# name: Deploy to AWS Elastic Beanstalk
-
-# on:
-#   push:
-#     branches:
-#       - main
-
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v4
-
-#       - name: Set up Node.js
-#         uses: actions/setup-node@v4
-#         with:
-#           node-version: '20'
-
-#       - name: Configure AWS Credentials
-#         uses: aws-actions/configure-aws-credentials@v4
-#         with:
-#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           aws-region: ${{ secrets.AWS_REGION }}
-
-#       - name: Login to Amazon ECR
-#         id: login-ecr
-#         uses: aws-actions/amazon-ecr-login@v2
-
-#       - name: Build, tag, and push backend image to ECR
-#         env:
-#           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#           ECR_REPOSITORY: entrepreneur-awards-backend
-#           IMAGE_TAG: ${{ github.sha }}
-#         working-directory: ./backend
-#         run: |
-#           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-#           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-#           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
-
-#       - name: Generate backend Dockerrun.aws.json
-#         working-directory: ./backend
-#         run: |
-#           cat <<EOF > Dockerrun.aws.json
-#           {
-#             "AWSEBDockerrunVersion": "1",
-#             "Image": {
-#               "Name": "${{ env.image }}",
-#               "Update": "true"
-#             },
-#             "Ports": [
-#               {
-#                 "ContainerPort": 3000,
-#                 "HostPort": 3000
-#               }
-#             ]
-#           }
-#           EOF
-
-#       - name: Deploy backend to Elastic Beanstalk
-#         uses: einaregilsson/beanstalk-deploy@v21
-#         with:
-#           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           application_name: entrepreneur-awards-backend
-#           environment_name: EntrepreneurAwardsBackend-env
-#           version_label: ${{ github.sha }}
-#           region: ${{ secrets.AWS_REGION }}
-#           deployment_package: backend/Dockerrun.aws.json
-
-#       - name: Build, tag, and push frontend image to ECR
-#         env:
-#           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#           ECR_REPOSITORY: entrepreneur-awards-frontend
-#           IMAGE_TAG: ${{ github.sha }}
-#         working-directory: ./frontend
-#         run: |
-#           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-#           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-#           echo "frontend_image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
-
-#       - name: Generate frontend Dockerrun.aws.json
-#         working-directory: ./frontend
-#         run: |
-#           cat <<EOF > Dockerrun.aws.json
-#           {
-#             "AWSEBDockerrunVersion": "1",
-#             "Image": {
-#               "Name": "${{ env.frontend_image }}",
-#               "Update": "true"
-#             },
-#             "Ports": [
-#               {
-#                 "ContainerPort": 5173,
-#                 "HostPort": 80
-#               }
-#             ]
-#           }
-#           EOF
-
-#       - name: Deploy frontend to Elastic Beanstalk
-#         uses: einaregilsson/beanstalk-deploy@v21
-#         with:
-#           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#           application_name: entrepreneur-awards-frontend
-#           environment_name: EntrepreneurAwardsFrontend-env
-#           version_label: ${{ github.sha }}
-#           region: ${{ secrets.AWS_REGION }}
-#           deployment_package: frontend/Dockerrun.aws.json
-
 name: Deploy to Server
 
 on:
   push:
     branches:
-      - main   # trigger only on main branch
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy to Server
+      - name: Copy SSH key
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd ${{ secrets.DEPLOY_PATH }}
-            git fetch --all
-            git reset --hard origin/main
-            docker-compose down
-            docker-compose build --no-cache
-            docker-compose up -d
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Add server to known_hosts
+        run: ssh-keyscan -H 14.139.180.67 >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          ssh -i ~/.ssh/id_rsa nucleus@14.139.180.67 << 'EOF'
+            cd /home/nucleus/EntrepreneursAward
+            git pull origin main
+            docker compose -f deploy.yml up -d --build
           EOF
