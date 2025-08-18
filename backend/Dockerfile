@@ -1,23 +1,18 @@
-# Use Node.js 20 as the base image
-FROM node:20-alpine
+# Use Node.js LTS
+FROM node:18-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package.json and install dependencies
 COPY package*.json ./
+RUN npm install --only=production
 
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the backend code
+# Copy source code
 COPY . .
 
-# Build the NestJS app
-RUN npm run build
-
-# Expose port 3000
+# Expose internal container port
 EXPOSE 3000
 
-# Start the app in production mode
-CMD ["npm", "run", "start:prod"]
+# Run backend
+CMD ["npm", "run", "start"]
