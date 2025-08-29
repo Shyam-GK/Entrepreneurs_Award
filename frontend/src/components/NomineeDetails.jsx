@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
-const API = 'http://localhost:3000'; // Adjust to your backend URL
+const API = 'http://10.1.67.158:4000'; // Adjust to your backend URL
 
 export default function NomineeDetails({ nominee, onBack }) {
   const [nominators, setNominators] = useState([]);
