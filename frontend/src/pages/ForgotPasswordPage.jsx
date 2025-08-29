@@ -8,25 +8,30 @@ export default function ForgotPasswordPage() {
     const navigate = useNavigate();
     const inputRefs = useRef([]); 
 
+    const [isLoading, setIsLoading] = useState(false);
+
     const handleEmailSubmit = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
         try {
             const res = await fetch('http://10.1.67.158:4000/auth/forgot-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
             });
-
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to send OTP');
 
-            alert('A verification code has been sent to your email.');
+            // alert('A verification code has been sent to your email.');
             setStep('verifyOtp');
         } catch (err) {
             console.error('Error sending OTP:', err);
             alert(err.message);
+        } finally {
+            setIsLoading(false);
         }
     };
+
 
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return false;
@@ -138,9 +143,14 @@ export default function ForgotPasswordPage() {
                             />
 
                             {step === 'enterEmail' && (
-                                <button type="submit" className="w-full px-4 py-3 font-semibold text-white rounded-lg shadow-md submit-button">
-                                    Send Verification Code
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full px-4 py-3 font-semibold text-white rounded-lg shadow-md submit-button disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                    {isLoading ? "Sending..." : "Send Verification Code"}
                                 </button>
+
                             )}
 
                             {step === 'verifyOtp' && (
