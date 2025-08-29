@@ -21,8 +21,8 @@ services:
       - SMTP_PORT=465
       - SMTP_USER=info.amcs@psgtech.ac.in
       - SMTP_PASS=xcpx igfx vapw ajfu
-      - APP_URL=http://your-server-ip:4000
-      - API_URL=http://your-server-ip:4000
+      - APP_URL=http://10.1.67.158:4000
+      - API_URL=http://10.1.67.158:4000
     volumes:
       - uploads:/app/Uploads
     depends_on:
@@ -37,7 +37,7 @@ services:
     ports:
       - '8080:5173' # map container 5173 -> host 8080
     environment:
-      - VITE_API_URL=http://your-server-ip:4000
+      - VITE_API_URL=http://10.1.67.158:4000
       - SUPPORT_EMAIL=info.amcs@psgtech.ac.in
     depends_on:
       - backend

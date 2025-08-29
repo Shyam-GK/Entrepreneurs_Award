@@ -1,4 +1,4 @@
-name: Deploy to Server
+name: Deploy
 
 on:
   push:
@@ -7,25 +7,20 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted   # ⚡ Important: use self-hosted runner
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Copy SSH key
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 10.1.67.158 >> ~/.ssh/known_hosts
 
-      - name: Add server to known_hosts
-        run: ssh-keyscan -H 14.139.180.67 >> ~/.ssh/known_hosts
-
-      - name: Deploy to server
+      - name: Deploy to Server
         run: |
-          ssh -i ~/.ssh/id_rsa nucleus@14.139.180.67 << 'EOF'
-            cd /home/nucleus/EntrepreneursAward
-            git pull origin main
-            docker compose -f deploy.yml up -d --build
-          EOF
+          scp -r ./dist nucleus@10.1.67.158:/home/nucleus/app
+          ssh nucleus@10.1.67.158 "cd /home/nucleus/app && docker compose up -d --build"
