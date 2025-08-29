@@ -121,7 +121,7 @@ async function postForm(url, formData, token, refreshTokenFn) {
       throw new Error(text || `Upload failed: ${res.status}`);
     }
     const ct = res.headers.get('content-type') || '';
-    return ct.includes('application/json') ? res.json() : res.text();
+    return ct.includes('application/json') ? retryRes.json() : retryRes.text();
   } catch (err) {
     console.error('postForm error:', err.message);
     throw err;
@@ -152,7 +152,7 @@ export default function RegistrationPage({ handleLogout }) {
           mergers: [],
           collaborations: [],
           founderType: 'Founder',
-          graduationDetails: [], // Initialize graduationDetails
+          graduationDetails: [],
         };
   });
 
@@ -373,10 +373,12 @@ export default function RegistrationPage({ handleLogout }) {
       'hasAwards',
       'hasForeignPresence',
       'hasSustainability',
+      'hasCpc',
       'iprDescription',
       'foreignDescription',
       'sustainabilityDescription',
       'ethicsDescription',
+      'cpcDescription',
     ];
 
     const raw = {};
@@ -423,6 +425,7 @@ export default function RegistrationPage({ handleLogout }) {
       'hasAwards',
       'hasForeignPresence',
       'hasSustainability',
+      'hasCpc',
     ];
 
     intFields.forEach((k) => {
