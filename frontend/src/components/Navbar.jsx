@@ -84,10 +84,6 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
         fetchData();
     }, []);
 
-    const goToNomineeDetails = () => {
-        if (nomineeId) navigate(`/nominee-details/my/profile`);
-    };
-
     return (
         <header className="w-full p-4 sm:p-5 shadow-md sticky top-0 z-20 bg-gradient-to-r from-sky-300 via-indigo-300 to-violet-300 backdrop-blur-sm">
             <nav className="container mx-auto flex justify-between items-center">
@@ -105,6 +101,12 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center space-x-2 sm:space-x-4">
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="header-logout-button text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors"
+                    >
+                        Dashboard
+                    </button>
                     {showCriteriaButton && (
                         <button
                             onClick={scrollToCriteria}
@@ -113,16 +115,6 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
                             Criteria
                         </button>
                     )}
-
-                    {nomineeId && (
-                        <button
-                            onClick={goToNomineeDetails}
-                            className="text-gray-800 font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors hover:bg-sky-200 cursor-pointer"
-                        >
-                            Nominee Details
-                        </button>
-                    )}
-
                     <button
                         onClick={handleLogout}
                         className="header-logout-button text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors cursor-pointer"
@@ -145,6 +137,15 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
             {isOpen && (
                 <div className="md:hidden mt-4">
                     <div className="flex flex-col items-center space-y-2">
+                        <button
+                            onClick={() => {
+                                navigate('/dashboard');
+                                setIsOpen(false);
+                            }}
+                            className="w-full text-center header-logout-button text-white font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors"
+                        >
+                            Dashboard
+                        </button>
                         {showCriteriaButton && (
                             <button
                                 onClick={() => {
@@ -156,19 +157,6 @@ export default function Navbar({ handleLogout, scrollToCriteria, showCriteriaBut
                                 Criteria
                             </button>
                         )}
-
-                        {nomineeId && (
-                            <button
-                                onClick={() => {
-                                    goToNomineeDetails();
-                                    setIsOpen(false);
-                                }}
-                                className="w-full text-center text-gray-800 font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors hover:bg-sky-200 cursor-pointer"
-                            >
-                                Nominee Details
-                            </button>
-                        )}
-
                         <button
                             onClick={() => {
                                 handleLogout();
