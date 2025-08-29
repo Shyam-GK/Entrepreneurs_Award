@@ -28,7 +28,16 @@ export class User {
   createdAt: Date;
 
   @Column({ type: 'boolean', default: false })
-  isSubmitted: boolean;  // ✅ New field
+  isSubmitted: boolean;
+
+  @Column({ type: 'text', default: 'unknown' })
+  course: string;
+
+  @Column({ type: 'text', nullable: true })
+  programme: string;
+
+  @Column({ type: 'text', nullable: true })
+  graduatedYear: string;
 
   @OneToMany(() => Nomination, nomination => nomination.nominator)
   nominationsAsNominator: Nomination[];

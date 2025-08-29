@@ -1,5 +1,4 @@
-// X:\Projects\Entrepreneur\entrepreneur-award\src\users\dto\create-user.dto.ts
-import { IsString, IsNotEmpty, IsEmail, IsEnum, IsMobilePhone , IsOptional} from 'class-validator';
+import { IsString, IsNotEmpty, IsEmail, IsEnum, IsMobilePhone, IsOptional, Matches } from 'class-validator';
 import { UserRole } from '../../enums/enums';
 
 export class CreateUserDto {
@@ -16,10 +15,19 @@ export class CreateUserDto {
   mobile: string;
 
   @IsString()
-  @IsOptional() // make password optional for initial registration
+  @IsOptional()
   password: string;
 
   @IsEnum(UserRole)
-  @IsOptional()              // make role optional since it has a default
-  role: UserRole = UserRole.User;  // default value
+  @IsOptional()
+  role: UserRole = UserRole.User;
+
+  @IsString()
+  course: string;
+
+  @IsString()
+  programme: string;
+
+  @IsString()
+  graduatedYear: string;
 }

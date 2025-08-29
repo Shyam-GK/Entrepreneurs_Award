@@ -13,7 +13,7 @@ export default function Hero({ isSubmitted }) {
                     <div className="py-8">
                         {/* Heading size is responsive */}
                         <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-snug text-gray-900">
-                            Alumni Entrepreneur Nomination
+                            PSG Tech Alumni Entrepreneur Nomination
                         </h2>
                         {/* Buttons are centered on mobile, start-aligned otherwise */}
                         <div className="flex flex-wrap gap-6 justify-center md:justify-start mt-10">
