@@ -66,6 +66,55 @@ export default function Step5({ data, handleChange }) {
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
         ></textarea>
       </div>
+
+      <fieldset className="pt-4 border-t border-gray-200">
+        <legend className="block text-sm font-medium text-gray-700 mb-2">
+          Does your company have a Code of Professional Conduct (CPC)?
+        </legend>
+        <div className="flex items-center gap-x-6">
+          <div className="flex items-center">
+            <input
+              id="cpcYes"
+              name="hasCpc"
+              type="radio"
+              value="true"
+              required
+              checked={data.hasCpc === 'true'}
+              onChange={handleChange}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="cpcYes" className="ml-2 block text-sm text-gray-900">Yes</label>
+          </div>
+          <div className="flex items-center">
+            <input
+              id="cpcNo"
+              name="hasCpc"
+              type="radio"
+              value="false"
+              checked={data.hasCpc === 'false'}
+              onChange={handleChange}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="cpcNo" className="ml-2 block text-sm text-gray-900">No</label>
+          </div>
+        </div>
+      </fieldset>
+
+      {data.hasCpc === 'true' && (
+        <div>
+          <label htmlFor="cpcDescription" className="block text-sm font-medium text-gray-700 mb-1">
+            Describe your company's Code of Professional Conduct:
+          </label>
+          <textarea
+            id="cpcDescription"
+            name="cpcDescription"
+            rows="4"
+            value={data.cpcDescription || ''}
+            onChange={handleChange}
+            className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
+          ></textarea>
+        </div>
+      )}
     </div>
   );
 }

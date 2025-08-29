@@ -17,7 +17,7 @@ export default function NominationPage({ handleLogout }) {
     try {
       const token = localStorage.getItem('accessToken');
 
-      const res = await fetch('http://10.1.67.158:4000/nominations', {
+      const res = await fetch('http://localhost:3000/nominations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

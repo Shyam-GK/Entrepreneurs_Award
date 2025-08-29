@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-export default function Step1({ data, handleChange }) {
+export default function Step1({ data, handleChange, addArrayItem, removeArrayItem }) {
   // --- Dynamic Year Generation for Dropdowns ---
   const passoutYears = [];
   for (let year = 2000; year >= 1955; year--) {
@@ -35,6 +35,52 @@ export default function Step1({ data, handleChange }) {
     handleChange(e);
   };
 
+  // --- State for Validation Errors ---
+  const [errors, setErrors] = useState({});
+
+  // --- Validate Graduation Entry ---
+  const validateGraduationEntry = (grad, index) => {
+    const newErrors = { ...errors };
+    const gradErrors = {};
+    
+    if (!grad.degree) gradErrors.degree = 'Degree is required';
+    if (!grad.institution) gradErrors.institution = 'Institution is required';
+    if (!grad.graduationYear) gradErrors.graduationYear = 'Graduation year is required';
+    else if (isNaN(parseInt(grad.graduationYear, 10)) || grad.graduationYear < 1955 || grad.graduationYear > currentYear) {
+      gradErrors.graduationYear = 'Please select a valid year between 1955 and today';
+    }
+
+    newErrors[index] = Object.keys(gradErrors).length > 0 ? gradErrors : undefined;
+    setErrors(newErrors);
+    return Object.keys(gradErrors).length === 0;
+  };
+
+  // --- Handle Graduation Details Change ---
+  const handleGraduationChange = (e, index) => {
+    const { name, value } = e.target;
+    console.log(`Step1: Updating graduationDetails[${index}].${name} to ${value}`);
+    handleChange(e, 'graduationDetails', index);
+    
+    // Validate on change
+    const updatedGrad = { ...data.graduationDetails[index], [name]: value };
+    validateGraduationEntry(updatedGrad, index);
+  };
+
+  // --- Add New Graduation Entry ---
+  const addGraduationEntry = () => {
+    console.log('Step1: Adding new graduation entry');
+    addArrayItem('graduationDetails');
+  };
+
+  // --- Remove Graduation Entry ---
+  const removeGraduationEntry = (index) => {
+    console.log(`Step1: Removing graduation entry at index ${index}`);
+    removeArrayItem('graduationDetails', index);
+    const newErrors = { ...errors };
+    delete newErrors[index];
+    setErrors(newErrors);
+  };
+
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-center text-gray-700">Step 1: Company Information</h3>
@@ -59,7 +105,7 @@ export default function Step1({ data, handleChange }) {
           id="user-photo"
           name="photo"
           accept="image/*"
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           className="w-full mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
         />
       </div>
@@ -72,7 +118,7 @@ export default function Step1({ data, handleChange }) {
           id="passoutYear"
           name="passoutYear"
           value={data.passoutYear || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           required
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
         >
@@ -87,6 +133,98 @@ export default function Step1({ data, handleChange }) {
         </select>
       </div>
 
+      {/* --- Graduation Details --- */}
+      <fieldset className="pt-4 border-t border-gray-200">
+        <legend className="text-sm font-medium text-gray-700 mb-2">Graduation Details</legend>
+        {(data.graduationDetails || [{}]).map((grad, index) => (
+          <div key={index} className="space-y-4 p-4 border border-gray-200 rounded-lg mb-4">
+            <div>
+              <label htmlFor={`degree-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                Degree (e.g., B.Tech, MBA):
+              </label>
+              <input
+                type="text"
+                id={`degree-${index}`}
+                name="degree"
+                value={grad.degree || ''}
+                onChange={(e) => handleGraduationChange(e, index)}
+                required
+                placeholder="e.g., B.Tech in Computer Science"
+                className={`w-full px-4 py-2 rounded-lg bg-white border ${
+                  errors[index]?.degree ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors[index]?.degree && (
+                <p className="text-red-500 text-xs mt-1">{errors[index].degree}</p>
+              )}
+            </div>
+            <div>
+              <label htmlFor={`institution-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                Institution Name:
+              </label>
+              <input
+                type="text"
+                id={`institution-${index}`}
+                name="institution"
+                value={grad.institution || ''}
+                onChange={(e) => handleGraduationChange(e, index)}
+                required
+                placeholder="e.g., IIT Madras"
+                className={`w-full px-4 py-2 rounded-lg bg-white border ${
+                  errors[index]?.institution ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors[index]?.institution && (
+                <p className="text-red-500 text-xs mt-1">{errors[index].institution}</p>
+              )}
+            </div>
+            <div>
+              <label htmlFor={`graduationYear-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                Year of Graduation:
+              </label>
+              <select
+                id={`graduationYear-${index}`}
+                name="graduationYear"
+                value={grad.graduationYear || ''}
+                onChange={(e) => handleGraduationChange(e, index)}
+                required
+                className={`w-full px-4 py-2 rounded-lg bg-white border ${
+                  errors[index]?.graduationYear ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="" disabled>
+                  Select Year
+                </option>
+                {passoutYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+              {errors[index]?.graduationYear && (
+                <p className="text-red-500 text-xs mt-1">{errors[index].graduationYear}</p>
+              )}
+            </div>
+            {data.graduationDetails.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeGraduationEntry(index)}
+                className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={addGraduationEntry}
+          className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Add Another Graduation
+        </button>
+      </fieldset>
+
       <fieldset>
         <legend className="block text-sm font-medium text-gray-700 mb-2">
           Are you a founder or co-founder?
@@ -99,7 +237,7 @@ export default function Step1({ data, handleChange }) {
               name="founderType"
               value="Founder"
               checked={data.founderType === 'Founder'}
-              onChange={handleChange}
+              onChange={(e) => handleChange(e)}
               required
               className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
             />
@@ -114,7 +252,7 @@ export default function Step1({ data, handleChange }) {
               name="founderType"
               value="Co-Founder"
               checked={data.founderType === 'Co-Founder'}
-              onChange={handleChange}
+              onChange={(e) => handleChange(e)}
               className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <label htmlFor="co-founder" className="ml-2">
@@ -134,7 +272,7 @@ export default function Step1({ data, handleChange }) {
           id="company-name"
           name="companyName"
           value={data.companyName || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           required
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
         />
@@ -150,7 +288,7 @@ export default function Step1({ data, handleChange }) {
           required
           rows="4"
           value={data.companyDescription || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
         ></textarea>
       </div>
@@ -164,7 +302,7 @@ export default function Step1({ data, handleChange }) {
           id="companyWebsite"
           name="companyWebsite"
           value={data.companyWebsite || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           required
           placeholder="https://example.com"
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
@@ -179,7 +317,7 @@ export default function Step1({ data, handleChange }) {
           id="yearOfEstablishment"
           name="yearOfEstablishment"
           value={data.yearOfEstablishment || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           required
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
         >
@@ -203,7 +341,7 @@ export default function Step1({ data, handleChange }) {
           id="totalEmployees"
           name="totalEmployees"
           value={data.totalEmployees || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           required
           placeholder="e.g., 150"
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
@@ -219,7 +357,7 @@ export default function Step1({ data, handleChange }) {
           id="annualTurnover"
           name="annualTurnover"
           value={data.annualTurnover || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           required
           placeholder="e.g., 250"
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
@@ -239,7 +377,7 @@ export default function Step1({ data, handleChange }) {
                   name="companyType"
                   value={type}
                   checked={data.companyType === type}
-                  onChange={handleChange}
+                  onChange={(e) => handleChange(e)}
                   className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <label htmlFor={type.toLowerCase().replace(/ /g, '-')} className="ml-2">
@@ -255,7 +393,7 @@ export default function Step1({ data, handleChange }) {
               name="companyType"
               value="Other"
               checked={data.companyType === 'Other'}
-              onChange={handleChange}
+              onChange={(e) => handleChange(e)}
               className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <label htmlFor="other" className="ml-2">Others:</label>
@@ -264,7 +402,7 @@ export default function Step1({ data, handleChange }) {
                 type="text"
                 name="companyTypeOther"
                 value={data.companyTypeOther || ''}
-                onChange={handleChange}
+                onChange={(e) => handleChange(e)}
                 className="ml-2 flex-grow px-2 py-1 rounded-md bg-white border border-gray-300"
               />
             )}
@@ -281,7 +419,7 @@ export default function Step1({ data, handleChange }) {
           id="reg-number"
           name="registrationNumber"
           value={data.registrationNumber || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           required
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
         />
@@ -311,7 +449,7 @@ export default function Step1({ data, handleChange }) {
           id="reg-address"
           name="registeredAddress"
           value={data.registeredAddress || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           required
           rows="3"
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
@@ -327,7 +465,7 @@ export default function Step1({ data, handleChange }) {
           id="reg-place"
           name="registrationPlace"
           value={data.registrationPlace || ''}
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           placeholder="e.g., Coimbatore, Tamil Nadu, India"
           required
           className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
@@ -353,7 +491,7 @@ export default function Step1({ data, handleChange }) {
           id="reg-cert"
           name="registrationCertificate"
           accept=".pdf,.jpg,.jpeg,.png"
-          onChange={handleChange}
+          onChange={(e) => handleChange(e)}
           className="w-full mt-2 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
         />
       </div>
@@ -371,7 +509,7 @@ export default function Step1({ data, handleChange }) {
               name="isFirstGeneration"
               value="true"
               checked={data.isFirstGeneration === 'true'}
-              onChange={handleChange}
+              onChange={(e) => handleChange(e)}
               className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <label htmlFor="first-gen-yes" className="ml-2">
@@ -385,7 +523,7 @@ export default function Step1({ data, handleChange }) {
               name="isFirstGeneration"
               value="false"
               checked={data.isFirstGeneration === 'false'}
-              onChange={handleChange}
+              onChange={(e) => handleChange(e)}
               className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <label htmlFor="first-gen-no" className="ml-2">
@@ -409,7 +547,7 @@ export default function Step1({ data, handleChange }) {
                   name="isUnrelatedToFamily"
                   value="true"
                   checked={data.isUnrelatedToFamily === 'true'}
-                  onChange={handleChange}
+                  onChange={(e) => handleChange(e)}
                   className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <label htmlFor="unrelated-yes" className="ml-2">
@@ -423,7 +561,7 @@ export default function Step1({ data, handleChange }) {
                   name="isUnrelatedToFamily"
                   value="false"
                   checked={data.isUnrelatedToFamily === 'false'}
-                  onChange={handleChange}
+                  onChange={(e) => handleChange(e)}
                   className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <label htmlFor="unrelated-no" className="ml-2">

@@ -24,7 +24,7 @@ export default function SignUpPage() {
     const handleSignUpSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch("http://10.1.67.158:4000/auth/register", {
+            const res = await fetch("http://localhost:3000/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),

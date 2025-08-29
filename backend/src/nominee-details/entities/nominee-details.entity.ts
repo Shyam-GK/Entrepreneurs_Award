@@ -102,6 +102,12 @@ export class NomineeDetails {
   @Column({ type: 'text', nullable: true })
   ethicsDescription: string | null;
 
+  @Column({ type: 'boolean', default: false })
+  hasCpc: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  cpcDescription: string | null;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 

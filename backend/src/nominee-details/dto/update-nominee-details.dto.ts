@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt, IsNumber, IsBoolean, IsEnum, Matches } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsNumber, IsEnum, IsBoolean, IsDateString } from 'class-validator';
 import { FounderType } from '../../enums/enums';
 
 export class UpdateNomineeDetailsDto {
@@ -23,8 +23,7 @@ export class UpdateNomineeDetailsDto {
   registrationNumber?: string;
 
   @IsOptional()
-  @IsString()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'registrationDate must be in YYYY-MM-DD format' })
+  @IsDateString()
   registrationDate?: string;
 
   @IsOptional()
@@ -110,4 +109,12 @@ export class UpdateNomineeDetailsDto {
   @IsOptional()
   @IsString()
   ethicsDescription?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasCpc?: boolean;
+
+  @IsOptional()
+  @IsString()
+  cpcDescription?: string;
 }

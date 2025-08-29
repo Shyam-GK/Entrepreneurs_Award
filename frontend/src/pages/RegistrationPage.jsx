@@ -152,6 +152,7 @@ export default function RegistrationPage({ handleLogout }) {
           mergers: [],
           collaborations: [],
           founderType: 'Founder',
+          graduationDetails: [], // Initialize graduationDetails
         };
   });
 
@@ -391,21 +392,21 @@ export default function RegistrationPage({ handleLogout }) {
         if (!v) {
           console.error('registrationDate is empty');
           setError('Registration date is required. Please select a valid date using the date picker.');
-          return raw;
+          return {};
         }
         try {
           const date = new Date(v);
           if (isNaN(date.getTime())) {
             console.error(`Invalid date format for registrationDate: ${v}`);
-            setError('Invalid registration date format. Please select a valid date using the date picker.');
-            return raw;
+            setError('Invalid registration date format. Please select a valid date (YYYY-MM-DD).');
+            return {};
           }
           v = v; // Keep as YYYY-MM-DD string
           console.log(`Processed registrationDate as YYYY-MM-DD string: ${v}`);
         } catch (err) {
           console.error(`Error parsing registrationDate: ${v}`, err);
           setError('Error parsing registration date. Please select a valid date using the date picker.');
-          return raw;
+          return {};
         }
       }
       if (v !== undefined && !(v instanceof File)) raw[k] = v;
@@ -447,6 +448,7 @@ export default function RegistrationPage({ handleLogout }) {
     boolFields.forEach((k) => {
       if (raw[k] === 'true') raw[k] = true;
       else if (raw[k] === 'false') raw[k] = false;
+      else if (raw[k] !== undefined) raw[k] = !!raw[k];
       else delete raw[k];
     });
 
@@ -493,6 +495,10 @@ export default function RegistrationPage({ handleLogout }) {
         dto.type = VALID_COLLABORATION_TYPES[0];
       }
     }
+    if (fieldName === 'graduationDetails' && dto.graduationYear) {
+      dto.graduationYear = parseInt(dto.graduationYear, 10);
+      if (isNaN(dto.graduationYear)) delete dto.graduationYear;
+    }
     return dto;
   };
 
@@ -534,6 +540,20 @@ export default function RegistrationPage({ handleLogout }) {
       return;
     }
 
+    // Validate graduationDetails
+    const validGraduationDetails = (formData.graduationDetails || []).filter(
+      (item) => item.degree && item.institution && item.graduationYear
+    );
+    if (validGraduationDetails.length > 0) {
+      console.log('Valid graduationDetails:', validGraduationDetails);
+    } else if (formData.graduationDetails && formData.graduationDetails.length > 0) {
+      console.error('Some graduation details are incomplete');
+      setError('Please ensure all graduation details have degree, institution, and year filled.');
+      setSubmitting(false);
+      setIsModalOpen(false);
+      return;
+    }
+
     try {
       let token = localStorage.getItem('accessToken');
       if (!token) {
@@ -559,7 +579,7 @@ export default function RegistrationPage({ handleLogout }) {
       }
 
       // Log full formData before submission
-      console.log('Form data before submission:', formData);
+      console.log('Form data before submission:', JSON.stringify(formData, null, 2));
 
       // Step 1: Upload profile data
       console.log('Submitting profile data for user:', userId);
@@ -569,7 +589,6 @@ export default function RegistrationPage({ handleLogout }) {
         throw new Error('Failed to build profile payload. Please check your input data.');
       }
       console.log('Profile payload being sent:', JSON.stringify(profilePayload, null, 2));
-
       try {
         await postJson(`${API}/nominee-details/${userId}/profile`, profilePayload, token, refreshAccessToken);
       } catch (err) {
@@ -579,7 +598,24 @@ export default function RegistrationPage({ handleLogout }) {
         );
       }
 
-      // Step 2: Upload files (photo, registrationCertificate)
+      // Step 2: Upload graduation details
+      if (validGraduationDetails.length > 0) {
+        console.log('Submitting graduation details:', JSON.stringify(validGraduationDetails, null, 2));
+        const graduationDtos = validGraduationDetails.map((item) => validateAndNormalizeDto(item, 'graduationDetails'));
+        try {
+          await postJson(
+            `${API}/nominee-details/${userId}/graduation-details`,
+            { dtos: graduationDtos },
+            token,
+            refreshAccessToken
+          );
+        } catch (err) {
+          console.error('Graduation details submission failed:', err.message);
+          throw new Error(`Graduation details submission failed: ${err.message}`);
+        }
+      }
+
+      // Step 3: Upload files (photo, registrationCertificate)
       const fileFields = [
         { name: 'photo', type: 'photo' },
         { name: 'registrationCertificate', type: 'registration' },
@@ -598,7 +634,7 @@ export default function RegistrationPage({ handleLogout }) {
         }
       }
 
-      // Step 3: Upload array-based data with files (awards, iprs, mergers, collaborations)
+      // Step 4: Upload array-based data with files (awards, iprs, mergers, collaborations)
       const arrayFields = [
         { name: 'awards', endpoint: 'awards' },
         { name: 'iprs', endpoint: 'iprs' },
@@ -607,9 +643,11 @@ export default function RegistrationPage({ handleLogout }) {
       ];
 
       for (const { name, endpoint } of arrayFields) {
-        const items = (formData[name] || []).filter(item => item.file instanceof File || Object.keys(item).some(k => k !== 'file' && item[k])); // Include items with files or non-empty fields
+        const items = (formData[name] || []).filter(
+          (item) => item.file instanceof File || Object.keys(item).some((k) => k !== 'file' && item[k])
+        );
         if (items.length > 0) {
-          console.log(`Submitting ${name} data:`, items);
+          console.log(`Submitting ${name} data:`, JSON.stringify(items, null, 2));
           const form = new FormData();
           const dtos = items.map((item, index) => {
             if (item.file instanceof File) {
