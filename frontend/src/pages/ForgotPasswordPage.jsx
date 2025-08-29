@@ -1,23 +1,24 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Fallback to localhost if env variable is not set
+
 export default function ForgotPasswordPage() {
     const [step, setStep] = useState('enterEmail');
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState(new Array(6).fill("")); 
     const navigate = useNavigate();
     const inputRefs = useRef([]); 
-
     const [isLoading, setIsLoading] = useState(false);
 
     const handleEmailSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            const res = await fetch('http://localhost:3000/auth/forgot-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            const res = await fetch(`${API}/auth/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to send OTP');
@@ -31,7 +32,6 @@ export default function ForgotPasswordPage() {
             setIsLoading(false);
         }
     };
-
 
     const handleOtpChange = (element, index) => {
         if (isNaN(element.value)) return false;
@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
         }
 
         try {
-            const res = await fetch('http://localhost:3000/auth/verify-otp', {
+            const res = await fetch(`${API}/auth/verify-otp`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, otp: verificationCode })
@@ -89,7 +89,7 @@ export default function ForgotPasswordPage() {
         }
 
         try {
-            const res = await fetch('http://localhost:3000/auth/reset-password', {
+            const res = await fetch(`${API}/auth/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -112,11 +112,9 @@ export default function ForgotPasswordPage() {
         }
     };
 
-
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-teal-200 via-blue-300 to-indigo-300">
             <div className="w-full max-w-md p-8 space-y-6 rounded-2xl shadow-lg form-container mx-4">
-
                 {(step === 'enterEmail' || step === 'verifyOtp') && (
                     <div>
                         <div className="text-center">
@@ -147,10 +145,9 @@ export default function ForgotPasswordPage() {
                                     type="submit"
                                     disabled={isLoading}
                                     className="w-full px-4 py-3 font-semibold text-white rounded-lg shadow-md submit-button disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
+                                >
                                     {isLoading ? "Sending..." : "Send Verification Code"}
                                 </button>
-
                             )}
 
                             {step === 'verifyOtp' && (

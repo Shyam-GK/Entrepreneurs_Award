@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import LandingNavbar from '../components/LandingNavbar';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Fallback to localhost if env variable is not set
+
 export default function SignUpPage() {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -24,9 +26,9 @@ export default function SignUpPage() {
     const handleSignUpSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch("http://localhost:3000/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            const res = await fetch(`${API}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             });
             if (res.ok) {

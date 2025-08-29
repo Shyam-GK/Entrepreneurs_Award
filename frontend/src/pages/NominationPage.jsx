@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import NominationsModal from '../components/NominationsModal';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Fallback to localhost if env variable is not set
+
 export default function NominationPage({ handleLogout }) {
   const [nomineeName, setNomineeName] = useState('');
   const [nomineeEmail, setNomineeEmail] = useState('');
@@ -17,7 +19,7 @@ export default function NominationPage({ handleLogout }) {
     try {
       const token = localStorage.getItem('accessToken');
 
-      const res = await fetch('http://localhost:3000/nominations', {
+      const res = await fetch(`${API}/nominations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +117,6 @@ export default function NominationPage({ handleLogout }) {
                 <option value="senior" className="py-2 px-3 rounded-md">Senior</option>
                 <option value="batchmate" className="py-2 px-3 rounded-md">Batchmate</option>
               </select>
-
             </div>
 
             <div>
@@ -138,4 +139,3 @@ export default function NominationPage({ handleLogout }) {
     </div>
   );
 }
- 

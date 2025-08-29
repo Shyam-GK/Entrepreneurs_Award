@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ArrowLeftIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
-const API = 'http://localhost:3000'; // Adjust to your backend URL
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3000'; // Fallback to localhost if env variable is not set
 
 export default function NomineeDetails({ nominee, onBack }) {
   const [nominators, setNominators] = useState([]);
