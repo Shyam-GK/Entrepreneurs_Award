@@ -12,7 +12,7 @@ export default function CriteriaSection() {
                             2000 from PSG College of Technology.
                         </li>
                         <li>
-                            Must be the <span className="font-semibold">founder or co-founder</span> of the company.
+                            Must be the <span className="font-semibold">founder or co-founder</span> of the company/firm.
                         </li>
                         <li>
                             <span className="font-semibold">Entrepreneurship Type:</span> Must be a first-generation
@@ -20,22 +20,22 @@ export default function CriteriaSection() {
                             unrelated to the family’s existing business.
                         </li>
                         <li>
-                            <span className="font-semibold">Company Registration:</span> The entity should be a registered
-                            technology company.
+                            <span className="font-semibold">Company/firm Registration:</span> The entity should be a registered
+                            technology company/firm.
                         </li>
                         <li>
-                            <span className="font-semibold">Business Domain:</span> The company must be in one of the
-                            following domains: Technology / Engineering Product Company, Manufacturing, Construction &amp;
+                            <span className="font-semibold">Business Domain:</span> The company/firm must be in one of the
+                            following domains: Technology / Engineering Product Company/firm, Manufacturing, Construction &amp;
                             Infrastructure Technology, Textile &amp; Apparel Technology, Healthcare &amp; Biotechnology,
                             Energy &amp; Clean Tech, Agri &amp; Food Processing Technology, Industrial Automation &amp;
                             Robotics, Communication Technology, Materials.
                         </li>
                         <li>
-                            <span className="font-semibold">Company Scale:</span> Annual turnover should exceed ₹200 crores
+                            <span className="font-semibold">Company/firm Scale:</span> Annual turnover should exceed ₹100 crores
                             and must employ over 100 full-time employees. (May be relaxed for IP-based ventures.)
                         </li>
                         <li>
-                            <span className="font-semibold">Innovation and IP:</span> Companies that have published
+                            <span className="font-semibold">Innovation and IP:</span> Companies/firms that have published
                             Intellectual Property Rights (IPRs), such as patents, trademarks, or copyrights.
                         </li>
                         <li>

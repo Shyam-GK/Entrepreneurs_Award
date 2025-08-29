@@ -81,9 +81,66 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
     setErrors(newErrors);
   };
 
+  // Ensure at least one graduationDetails block
+  const graduationDetails = data.graduationDetails && data.graduationDetails.length > 0 ? data.graduationDetails : [{}];
+
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold text-center text-gray-700">Step 1: Company Information</h3>
+      <h3 className="text-xl font-semibold text-center text-gray-700">Step 1: Organization Information</h3>
+
+      {/* --- Name of the Organization --- */}
+      <div>
+        <label htmlFor="organization-name" className="block text-sm font-medium text-gray-700 mb-1">
+          Name of the Organization:
+        </label>
+        <input
+          type="text"
+          id="organization-name"
+          name="companyName"
+          value={data.companyName || ''}
+          onChange={(e) => handleChange(e)}
+          required
+          className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
+        />
+      </div>
+
+      {/* --- Founder or Co-Founder --- */}
+      <fieldset>
+        <legend className="block text-sm font-medium text-gray-700 mb-2">
+          Are you a founder or co-founder?
+        </legend>
+        <div className="flex items-center gap-x-6">
+          <div className="flex items-center">
+            <input
+              type="radio"
+              id="founder"
+              name="founderType"
+              value="Founder"
+              checked={data.founderType === 'Founder'}
+              onChange={(e) => handleChange(e)}
+              required
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="founder" className="ml-2">
+              Founder
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="radio"
+              id="co-founder"
+              name="founderType"
+              value="Co-Founder"
+              checked={data.founderType === 'Co-Founder'}
+              onChange={(e) => handleChange(e)}
+              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="co-founder" className="ml-2">
+              Co-Founder
+            </label>
+          </div>
+        </div>
+      </fieldset>
 
       {/* --- Personal & Founder Details --- */}
       <div>
@@ -136,8 +193,8 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
       {/* --- Graduation Details --- */}
       <fieldset className="pt-4 border-t border-gray-200">
         <legend className="text-sm font-medium text-gray-700 mb-2">Graduation Details</legend>
-        {(data.graduationDetails || [{}]).map((grad, index) => (
-          <div key={index} className="space-y-4 p-4 border border-gray-200 rounded-lg mb-4">
+        {graduationDetails.map((grad, index) => (
+          <div key={index} className="space-y-4 mb-4">
             <div>
               <label htmlFor={`degree-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
                 Degree (e.g., B.Tech, MBA):
@@ -205,7 +262,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
                 <p className="text-red-500 text-xs mt-1">{errors[index].graduationYear}</p>
               )}
             </div>
-            {data.graduationDetails.length > 1 && (
+            {graduationDetails.length > 1 && (
               <button
                 type="button"
                 onClick={() => removeGraduationEntry(index)}
@@ -225,65 +282,13 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
         </button>
       </fieldset>
 
-      <fieldset>
-        <legend className="block text-sm font-medium text-gray-700 mb-2">
-          Are you a founder or co-founder?
-        </legend>
-        <div className="flex items-center gap-x-6">
-          <div className="flex items-center">
-            <input
-              type="radio"
-              id="founder"
-              name="founderType"
-              value="Founder"
-              checked={data.founderType === 'Founder'}
-              onChange={(e) => handleChange(e)}
-              required
-              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label htmlFor="founder" className="ml-2">
-              Founder
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input
-              type="radio"
-              id="co-founder"
-              name="founderType"
-              value="Co-Founder"
-              checked={data.founderType === 'Co-Founder'}
-              onChange={(e) => handleChange(e)}
-              className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label htmlFor="co-founder" className="ml-2">
-              Co-Founder
-            </label>
-          </div>
-        </div>
-      </fieldset>
-
-      {/* --- Company Details --- */}
+      {/* --- Organization Details --- */}
       <div>
-        <label htmlFor="company-name" className="block text-sm font-medium text-gray-700 mb-1">
-          Name of the Company:
-        </label>
-        <input
-          type="text"
-          id="company-name"
-          name="companyName"
-          value={data.companyName || ''}
-          onChange={(e) => handleChange(e)}
-          required
-          className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="about-company" className="block text-sm font-medium text-gray-700 mb-1">
-          About the Company (Brief Profile):
+        <label htmlFor="about-organization" className="block text-sm font-medium text-gray-700 mb-1">
+          About the Organization (Brief Profile):
         </label>
         <textarea
-          id="about-company"
+          id="about-organization"
           name="companyDescription"
           required
           rows="4"
@@ -294,12 +299,12 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
       </div>
 
       <div>
-        <label htmlFor="companyWebsite" className="block text-sm font-medium text-gray-700 mb-1">
-          Company Website:
+        <label htmlFor="organizationWebsite" className="block text-sm font-medium text-gray-700 mb-1">
+          Organization Website:
         </label>
         <input
           type="url"
-          id="companyWebsite"
+          id="organizationWebsite"
           name="companyWebsite"
           value={data.companyWebsite || ''}
           onChange={(e) => handleChange(e)}
@@ -365,10 +370,10 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
       </div>
 
       {/* --- Registration Details --- */}
-      <fieldset className="space-y-2">
+      <fieldset className="pt-4 border-t border-gray-200">
         <legend className="text-sm font-medium text-gray-700 mb-2">Type of Entity:</legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {['Private Limited Company', 'Public Limited Company', 'Partnership Firm', 'LLP', 'Sole Proprietorship'].map(
+          {['Private Limited Organization', 'Public Limited Organization', 'Partnership Firm', 'LLP', 'Sole Proprietorship'].map(
             (type) => (
               <div key={type} className="flex items-center">
                 <input
@@ -412,7 +417,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
 
       <div>
         <label htmlFor="reg-number" className="block text-sm font-medium text-gray-700 mb-1">
-          Company Registration Number (CIN / LLPIN / etc.):
+          Organization Registration Number (CIN / LLPIN / etc.):
         </label>
         <input
           type="text"
@@ -443,7 +448,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
 
       <div>
         <label htmlFor="reg-address" className="block text-sm font-medium text-gray-700 mb-1">
-          Registered Address of the Company:
+          Registered Address of the Organization:
         </label>
         <textarea
           id="reg-address"
@@ -534,43 +539,41 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
       </fieldset>
 
       {data.isFirstGeneration === 'false' && (
-        <div className="pt-4 border-t border-gray-200">
-          <fieldset>
-            <legend className="block text-sm font-medium text-gray-700 mb-2">
-              Is your business entirely unrelated to your family’s existing business?
-            </legend>
-            <div className="flex items-center gap-x-6">
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="unrelated-yes"
-                  name="isUnrelatedToFamily"
-                  value="true"
-                  checked={data.isUnrelatedToFamily === 'true'}
-                  onChange={(e) => handleChange(e)}
-                  className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="unrelated-yes" className="ml-2">
-                  Yes
-                </label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  id="unrelated-no"
-                  name="isUnrelatedToFamily"
-                  value="false"
-                  checked={data.isUnrelatedToFamily === 'false'}
-                  onChange={(e) => handleChange(e)}
-                  className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="unrelated-no" className="ml-2">
-                  No
-                </label>
-              </div>
+        <fieldset className="pt-4 border-t border-gray-200">
+          <legend className="block text-sm font-medium text-gray-700 mb-2">
+            Is your business entirely unrelated to your family’s existing business?
+          </legend>
+          <div className="flex items-center gap-x-6">
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="unrelated-yes"
+                name="isUnrelatedToFamily"
+                value="true"
+                checked={data.isUnrelatedToFamily === 'true'}
+                onChange={(e) => handleChange(e)}
+                className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="unrelated-yes" className="ml-2">
+                Yes
+              </label>
             </div>
-          </fieldset>
-        </div>
+            <div className="flex items-center">
+              <input
+                type="radio"
+                id="unrelated-no"
+                name="isUnrelatedToFamily"
+                value="false"
+                checked={data.isUnrelatedToFamily === 'false'}
+                onChange={(e) => handleChange(e)}
+                className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="unrelated-no" className="ml-2">
+                No
+              </label>
+            </div>
+          </div>
+        </fieldset>
       )}
     </div>
   );

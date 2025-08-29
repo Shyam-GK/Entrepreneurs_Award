@@ -5,9 +5,9 @@ export default function Step5({ data, handleChange }) {
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-center text-gray-700">Step 5: Sustainability & Ethics</h3>
 
-      <fieldset>
+      <fieldset className="pt-4 border-t border-gray-200">
         <legend className="block text-sm font-medium text-gray-700 mb-2">
-          Does your company follow any sustainability practices or contribute to environmental, social, or economic development?
+          Does your organization follow any sustainability practices or contribute to environmental, social, or economic development?
         </legend>
         <div className="flex items-center gap-x-6">
           <div className="flex items-center">
@@ -54,7 +54,7 @@ export default function Step5({ data, handleChange }) {
 
       <div className="pt-4 border-t border-gray-200">
         <label htmlFor="ethicsDescription" className="block text-sm font-medium text-gray-700 mb-1">
-          Briefly describe how your company ensures ethical business operations and legal compliance:
+          Briefly describe how your organization ensures ethical business operations and legal compliance:
         </label>
         <textarea
           id="ethicsDescription"
@@ -69,7 +69,7 @@ export default function Step5({ data, handleChange }) {
 
       <fieldset className="pt-4 border-t border-gray-200">
         <legend className="block text-sm font-medium text-gray-700 mb-2">
-          Does your company have a Code of Professional Conduct (CPC)?
+          Does your organization have a Code of Professional Conduct (CPC)?
         </legend>
         <div className="flex items-center gap-x-6">
           <div className="flex items-center">
@@ -103,7 +103,7 @@ export default function Step5({ data, handleChange }) {
       {data.hasCpc === 'true' && (
         <div>
           <label htmlFor="cpcDescription" className="block text-sm font-medium text-gray-700 mb-1">
-            Describe your company's Code of Professional Conduct:
+            Describe your organization’s Code of Professional Conduct:
           </label>
           <textarea
             id="cpcDescription"
