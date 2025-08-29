@@ -1,4 +1,3 @@
-// X:\Projects\Entrepreneur\entrepreneur-award\src\users\users.module.ts
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
@@ -13,6 +12,6 @@ import { OtpsModule } from '../otps/otps.module';
   ],
   controllers: [UsersController],
   providers: [UsersService],
-  exports: [UsersService],
+  exports: [TypeOrmModule, UsersService], // Export TypeOrmModule to provide UserRepository
 })
 export class UsersModule {}

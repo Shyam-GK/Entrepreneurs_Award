@@ -26,10 +26,12 @@ import { CreateAwardDto } from './dto/create-award.dto';
 import { CreateIprDto } from './dto/create-ipr.dto';
 import { CreateMergerDto, MergerType } from './dto/create-merger.dto';
 import { CreateCollaborationDto } from './dto/create-collaboration.dto';
+import { CreateGraduationDetailDto } from './dto/create-graduation-detail.dto';
 import { Award } from './entities/award.entity';
 import { Ipr } from './entities/ipr.entity';
 import { Merger } from './entities/merger.entity';
 import { Collaboration } from './entities/collaboration.entity';
+import { GraduationDetail } from './entities/graduation-detail.entity';
 
 // Define valid types to match database enums
 const VALID_AWARD_LEVELS = ['National', 'International', 'Industry'];
@@ -223,6 +225,43 @@ export class NomineeDetailsController {
       } catch (err) {
         console.error(`Failed to add IPR for userId: ${userId}, index: ${i}`, err);
         throw new HttpException(`Failed to add IPR at index ${i}: ${err.message}`, HttpStatus.BAD_REQUEST);
+      }
+    }
+    return results;
+  }
+
+  @Post(':userId/graduation-details')
+  async addGraduationDetailsForUser(
+    @Param('userId') userId: string,
+    @Body('dtos') dtosBody: string | CreateGraduationDetailDto | CreateGraduationDetailDto[],
+    @Req() req: any,
+  ) {
+    if (req.user?.id !== userId) throw new HttpException('Not authorized for this user', HttpStatus.FORBIDDEN);
+    
+    let graduationsArray: CreateGraduationDetailDto[];
+    if (typeof dtosBody === 'string') {
+      try {
+        graduationsArray = JSON.parse(dtosBody);
+      } catch (e) {
+        throw new BadRequestException('Invalid DTO format: dtos must be valid JSON');
+      }
+    } else {
+      graduationsArray = Array.isArray(dtosBody) ? dtosBody : [dtosBody];
+    }
+
+    if (graduationsArray.length === 0) {
+      throw new BadRequestException('At least one graduation detail DTO is required');
+    }
+
+    console.log(`Adding graduation details for userId: ${userId}, graduations: ${JSON.stringify(graduationsArray, null, 2)}`);
+    const results: GraduationDetail[] = [];
+    for (let i = 0; i < graduationsArray.length; i++) {
+      try {
+        const result = await this.nomineeDetailsService.addGraduationDetailForUser(userId, graduationsArray[i]);
+        results.push(result);
+      } catch (err) {
+        console.error(`Failed to add graduation detail for userId: ${userId}, index: ${i}`, err);
+        throw new HttpException(`Failed to add graduation detail at index ${i}: ${err.message}`, HttpStatus.BAD_REQUEST);
       }
     }
     return results;

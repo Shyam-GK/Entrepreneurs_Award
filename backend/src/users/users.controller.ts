@@ -16,7 +16,7 @@ export class UsersController {
   // src/users/users.controller.ts
 
   @Get('me')
-  @UseGuards(AuthGuard('jwt')) // Add this
+  @UseGuards(AuthGuard('jwt')) // Add this`
   async getMe(@Req() req: any) {
     const userId = req.user?.id;
     if (!userId) {

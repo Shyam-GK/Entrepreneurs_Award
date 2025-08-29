@@ -1,10 +1,10 @@
-// X:\Projects\Entrepreneur\entrepreneur-award\src\nominee-details\entities\nominee-details.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Award } from './award.entity';
 import { Ipr } from './ipr.entity';
 import { Merger } from './merger.entity';
 import { Collaboration } from './collaboration.entity';
+import { GraduationDetail } from './graduation-detail.entity';
 import { FounderType } from '../../enums/enums';
 
 @Entity('nominee_details')
@@ -33,8 +33,8 @@ export class NomineeDetails {
   @Column({ type: 'text', nullable: true })
   registrationNumber: string | null;
 
-  @Column({ type: 'text', nullable: true }) // Changed from 'date' to 'text'
-  registrationDate: string | null; // Changed type from Date to string
+  @Column({ type: 'text', nullable: true })
+  registrationDate: string | null;
 
   @Column({ type: 'text', nullable: true })
   registeredAddress: string | null;
@@ -116,4 +116,7 @@ export class NomineeDetails {
 
   @OneToMany(() => Collaboration, collaboration => collaboration.nominee)
   collaborations: Collaboration[];
+
+  @OneToMany(() => GraduationDetail, graduationDetail => graduationDetail.nominee)
+  graduationDetails: GraduationDetail[];
 }

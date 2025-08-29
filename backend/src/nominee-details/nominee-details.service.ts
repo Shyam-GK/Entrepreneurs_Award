@@ -6,11 +6,13 @@ import { Award } from './entities/award.entity';
 import { Ipr } from './entities/ipr.entity';
 import { Merger } from './entities/merger.entity';
 import { Collaboration } from './entities/collaboration.entity';
+import { GraduationDetail } from './entities/graduation-detail.entity';
 import { UpdateNomineeDetailsDto } from './dto/update-nominee-details.dto';
 import { CreateAwardDto } from './dto/create-award.dto';
 import { CreateIprDto } from './dto/create-ipr.dto';
 import { CreateMergerDto } from './dto/create-merger.dto';
 import { CreateCollaborationDto } from './dto/create-collaboration.dto';
+import { CreateGraduationDetailDto } from './dto/create-graduation-detail.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { NominationsService } from '../nominations/nominations.service';
@@ -31,6 +33,7 @@ export class NomineeDetailsService {
     @InjectRepository(Ipr) private readonly iprRepo: Repository<Ipr>,
     @InjectRepository(Merger) private readonly mergerRepo: Repository<Merger>,
     @InjectRepository(Collaboration) private readonly collabRepo: Repository<Collaboration>,
+    @InjectRepository(GraduationDetail) private readonly graduationRepo: Repository<GraduationDetail>,
     private readonly nominationsService: NominationsService,
   ) {}
 
@@ -156,6 +159,15 @@ export class NomineeDetailsService {
       console.log('No file for IPR, skipping filePath');
     }
     return this.iprRepo.save(ipr);
+  }
+
+  async addGraduationDetailForUser(userId: string, dto: CreateGraduationDetailDto) {
+    const nominee = await this.findOrCreateNomineeDetailsForUser(userId);
+    const graduation = this.graduationRepo.create({
+      ...dto,
+      nominee,
+    });
+    return this.graduationRepo.save(graduation);
   }
 
   async addMergerForUser(userId: string, dto: CreateMergerDto, file: Express.Multer.File) {
