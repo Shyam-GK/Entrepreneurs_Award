@@ -69,7 +69,7 @@ export default function Step5({ data, handleChange }) {
 
       <fieldset className="pt-4 border-t border-gray-200">
         <legend className="block text-sm font-medium text-gray-700 mb-2">
-          Does your organization have a Code of Professional Conduct (CPC)?
+          Does your organization engage in Corporate Social Responsibility (CSR)?
         </legend>
         <div className="flex items-center gap-x-6">
           <div className="flex items-center">
@@ -103,7 +103,7 @@ export default function Step5({ data, handleChange }) {
       {data.hasCpc === 'true' && (
         <div>
           <label htmlFor="cpcDescription" className="block text-sm font-medium text-gray-700 mb-1">
-            Describe your organization’s Code of Professional Conduct:
+            Describe your organization’s Corporate social responsibility (CSR) initiatives or community engagement activities:
           </label>
           <textarea
             id="cpcDescription"

@@ -96,7 +96,7 @@ export default function Step2({ data, handleChange, addArrayItem, removeArrayIte
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Upload IPR Certificate:</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Upload IPR Certificate:(Max 25MB)</label>
                 {ipr.file && (
                   <div className="mt-2 p-2 border border-green-200 bg-green-50 rounded-md text-sm">
                     <span className="font-medium text-green-800">Selected:</span> {ipr.file.name}

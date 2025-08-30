@@ -99,7 +99,7 @@ export default function Step3({ data, handleChange, addArrayItem, removeArrayIte
                 ></textarea>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Supporting Document:</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Supporting Document:(MAX 25MB)</label>
                 {merger.file && (
                   <div className="mt-2 p-2 border border-green-200 bg-green-50 rounded-md text-sm">
                     <span className="font-medium text-green-800">Selected:</span> {merger.file.name}

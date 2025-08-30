@@ -145,7 +145,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
       {/* --- Personal & Founder Details --- */}
       <div>
         <label htmlFor="user-photo" className="block text-sm font-medium text-gray-700 mb-1">
-          Upload Your Photograph:
+          Upload Your Photograph: (Max 25MB)
         </label>
         {data.photo && (
           <div className="mt-2 p-2 border border-green-200 bg-green-50 rounded-md text-sm">
@@ -192,7 +192,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
 
       {/* --- Graduation Details --- */}
       <fieldset className="pt-4 border-t border-gray-200">
-        <legend className="text-sm font-medium text-gray-700 mb-2">Graduation Details</legend>
+        <legend className="text-sm font-medium text-gray-700 mb-2">Educational Details</legend>
         {graduationDetails.map((grad, index) => (
           <div key={index} className="space-y-4 mb-4">
             <div>
@@ -373,7 +373,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
       <fieldset className="pt-4 border-t border-gray-200">
         <legend className="text-sm font-medium text-gray-700 mb-2">Type of Entity:</legend>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {['Private Limited Organization', 'Public Limited Organization', 'Partnership Firm', 'LLP', 'Sole Proprietorship'].map(
+          {['Private Limited Organization', 'Public Limited Organization', 'Partnership Firm', 'LLP', 'Sole Proprietorship', 'One Person Company (OPC)'].map(
             (type) => (
               <div key={type} className="flex items-center">
                 <input
@@ -401,7 +401,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
               onChange={(e) => handleChange(e)}
               className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
             />
-            <label htmlFor="other" className="ml-2">Others:</label>
+            {/* <label htmlFor="other" className="ml-2">Others:</label> */}
             {data.companyType === 'Other' && (
               <input
                 type="text"
@@ -479,7 +479,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
 
       <div>
         <label htmlFor="reg-cert" className="block text-sm font-medium text-gray-700 mb-1">
-          Copy of Registration Certificate:
+          Copy of Registration Certificate:(Max 25MB)
         </label>
         {data.registrationCertificate && (
           <div className="mt-2 p-2 border border-green-200 bg-green-50 rounded-md text-sm">
