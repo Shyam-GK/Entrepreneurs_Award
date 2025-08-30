@@ -392,7 +392,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
             )
           )}
           <div className="flex items-center col-span-1 sm:col-span-2">
-            <input
+            {/* <input
               type="radio"
               id="other"
               name="companyType"
@@ -400,9 +400,9 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
               checked={data.companyType === 'Other'}
               onChange={(e) => handleChange(e)}
               className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
+            /> */}
             {/* <label htmlFor="other" className="ml-2">Others:</label> */}
-            {data.companyType === 'Other' && (
+            {/* {data.companyType === 'Other' && (
               <input
                 type="text"
                 name="companyTypeOther"
@@ -410,7 +410,7 @@ export default function Step1({ data, handleChange, addArrayItem, removeArrayIte
                 onChange={(e) => handleChange(e)}
                 className="ml-2 flex-grow px-2 py-1 rounded-md bg-white border border-gray-300"
               />
-            )}
+            )} */}
           </div>
         </div>
       </fieldset>
